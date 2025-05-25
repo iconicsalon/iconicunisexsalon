@@ -1,17 +1,34 @@
 
 import React from 'react';
-import Header from '@/components/Header';
-import Hero from '@/components/Hero';
-import Services from '@/components/Services';
+import Navbar from '@/components/Navbar';
+import PremiumServices from '@/components/PremiumServices';
+import TestimonialCarousel from '@/components/TestimonialCarousel';
+import GoogleReviews from '@/components/GoogleReviews';
 import Footer from '@/components/Footer';
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main>
-        <Hero />
-        <Services />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="pt-16">
+        {/* Hero Section */}
+        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-salon text-white">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
+              Iconic Unisex Salon
+            </h1>
+            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 animate-fade-in">
+              Experience premium beauty and grooming services in the heart of Bengaluru
+            </p>
+            <button className="bg-white text-salon-purple px-8 py-4 rounded-full font-semibold text-lg hover:scale-105 transition-transform shadow-lg animate-scale-in">
+              Book Appointment
+            </button>
+          </div>
+        </section>
+
+        <PremiumServices />
+        <TestimonialCarousel />
+        <GoogleReviews />
       </main>
       <Footer />
     </div>

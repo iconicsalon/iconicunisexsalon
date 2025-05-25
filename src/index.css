@@ -89,4 +89,11 @@
   .gradient-text {
     @apply bg-gradient-to-r from-salon-purple via-salon-rose to-salon-gold bg-clip-text text-transparent;
   }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
 }
