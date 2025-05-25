@@ -15,32 +15,32 @@ const AllServices = () => {
         {
           title: 'Haircuts & Styling',
           services: [
-            { name: 'Hair Cut', gender: 'unisex' },
-            { name: 'Hair Trimming', gender: 'unisex' },
-            { name: 'Beard Trimming', gender: 'male' },
-            { name: 'Mustache Styling', gender: 'male' },
-            { name: 'Hair Styling', gender: 'unisex' },
-            { name: 'Blow Dry', gender: 'female' },
+            { name: 'Hair Cut', gender: 'unisex' as const },
+            { name: 'Hair Trimming', gender: 'unisex' as const },
+            { name: 'Beard Trimming', gender: 'male' as const },
+            { name: 'Mustache Styling', gender: 'male' as const },
+            { name: 'Hair Styling', gender: 'unisex' as const },
+            { name: 'Blow Dry', gender: 'female' as const },
           ]
         },
         {
           title: 'Hair Coloring',
           services: [
-            { name: 'Hair Coloring', gender: 'unisex' },
-            { name: 'Hair Highlights', gender: 'unisex' },
-            { name: 'Root Touch Up', gender: 'unisex' },
-            { name: 'Global Coloring', gender: 'unisex' },
-            { name: 'Ombre/Balayage', gender: 'female' },
+            { name: 'Hair Coloring', gender: 'unisex' as const },
+            { name: 'Hair Highlights', gender: 'unisex' as const },
+            { name: 'Root Touch Up', gender: 'unisex' as const },
+            { name: 'Global Coloring', gender: 'unisex' as const },
+            { name: 'Ombre/Balayage', gender: 'female' as const },
           ]
         },
         {
           title: 'Hair Treatments',
           services: [
-            { name: 'Hair Spa', gender: 'unisex' },
-            { name: 'Hair Straightening', gender: 'unisex' },
-            { name: 'Hair Smoothening', gender: 'unisex' },
-            { name: 'Keratin Treatment', gender: 'unisex' },
-            { name: 'Anti-Dandruff Treatment', gender: 'unisex' },
+            { name: 'Hair Spa', gender: 'unisex' as const },
+            { name: 'Hair Straightening', gender: 'unisex' as const },
+            { name: 'Hair Smoothening', gender: 'unisex' as const },
+            { name: 'Keratin Treatment', gender: 'unisex' as const },
+            { name: 'Anti-Dandruff Treatment', gender: 'unisex' as const },
           ]
         }
       ]
@@ -52,30 +52,30 @@ const AllServices = () => {
         {
           title: 'Threading',
           services: [
-            { name: 'Eyebrow Threading', gender: 'unisex' },
-            { name: 'Upper Lip Threading', gender: 'female' },
-            { name: 'Full Face Threading', gender: 'female' },
-            { name: 'Chin Threading', gender: 'female' },
+            { name: 'Eyebrow Threading', gender: 'unisex' as const },
+            { name: 'Upper Lip Threading', gender: 'female' as const },
+            { name: 'Full Face Threading', gender: 'female' as const },
+            { name: 'Chin Threading', gender: 'female' as const },
           ]
         },
         {
           title: 'Bleach & Clean-Ups',
           services: [
-            { name: 'Face Bleach', gender: 'female' },
-            { name: 'Clean Up', gender: 'unisex' },
-            { name: 'Fruit Clean Up', gender: 'unisex' },
-            { name: 'Detan Pack', gender: 'unisex' },
+            { name: 'Face Bleach', gender: 'female' as const },
+            { name: 'Clean Up', gender: 'unisex' as const },
+            { name: 'Fruit Clean Up', gender: 'unisex' as const },
+            { name: 'Detan Pack', gender: 'unisex' as const },
           ]
         },
         {
           title: 'Facials',
           services: [
-            { name: 'Classic Facial', gender: 'unisex' },
-            { name: 'Gold Facial', gender: 'unisex' },
-            { name: 'Diamond Facial', gender: 'unisex' },
-            { name: 'Anti-Aging Facial', gender: 'unisex' },
-            { name: 'Hydrating Facial', gender: 'unisex' },
-            { name: 'Acne Treatment Facial', gender: 'unisex' },
+            { name: 'Classic Facial', gender: 'unisex' as const },
+            { name: 'Gold Facial', gender: 'unisex' as const },
+            { name: 'Diamond Facial', gender: 'unisex' as const },
+            { name: 'Anti-Aging Facial', gender: 'unisex' as const },
+            { name: 'Hydrating Facial', gender: 'unisex' as const },
+            { name: 'Acne Treatment Facial', gender: 'unisex' as const },
           ]
         }
       ]
@@ -87,31 +87,31 @@ const AllServices = () => {
         {
           title: 'Waxing',
           services: [
-            { name: 'Full Arms Wax', gender: 'female' },
-            { name: 'Full Legs Wax', gender: 'female' },
-            { name: 'Underarms Wax', gender: 'female' },
-            { name: 'Bikini Wax', gender: 'female' },
-            { name: 'Back Wax', gender: 'unisex' },
-            { name: 'Chest Wax', gender: 'male' },
+            { name: 'Full Arms Wax', gender: 'female' as const },
+            { name: 'Full Legs Wax', gender: 'female' as const },
+            { name: 'Underarms Wax', gender: 'female' as const },
+            { name: 'Bikini Wax', gender: 'female' as const },
+            { name: 'Back Wax', gender: 'unisex' as const },
+            { name: 'Chest Wax', gender: 'male' as const },
           ]
         },
         {
           title: 'Nail Care',
           services: [
-            { name: 'Manicure', gender: 'unisex' },
-            { name: 'Pedicure', gender: 'unisex' },
-            { name: 'Gel Manicure', gender: 'unisex' },
-            { name: 'Nail Art', gender: 'female' },
-            { name: 'Nail Extensions', gender: 'female' },
+            { name: 'Manicure', gender: 'unisex' as const },
+            { name: 'Pedicure', gender: 'unisex' as const },
+            { name: 'Gel Manicure', gender: 'unisex' as const },
+            { name: 'Nail Art', gender: 'female' as const },
+            { name: 'Nail Extensions', gender: 'female' as const },
           ]
         },
         {
           title: 'Body Care',
           services: [
-            { name: 'Body Polishing', gender: 'unisex' },
-            { name: 'Body Scrub', gender: 'unisex' },
-            { name: 'Body Wrap', gender: 'unisex' },
-            { name: 'Tan Removal', gender: 'unisex' },
+            { name: 'Body Polishing', gender: 'unisex' as const },
+            { name: 'Body Scrub', gender: 'unisex' as const },
+            { name: 'Body Wrap', gender: 'unisex' as const },
+            { name: 'Tan Removal', gender: 'unisex' as const },
           ]
         }
       ]
@@ -123,20 +123,20 @@ const AllServices = () => {
         {
           title: 'Professional Makeup',
           services: [
-            { name: 'Party Makeup', gender: 'female' },
-            { name: 'Bridal Makeup', gender: 'female' },
-            { name: 'Engagement Makeup', gender: 'female' },
-            { name: 'Pre-Wedding Shoot Makeup', gender: 'female' },
-            { name: 'HD Makeup', gender: 'female' },
+            { name: 'Party Makeup', gender: 'female' as const },
+            { name: 'Bridal Makeup', gender: 'female' as const },
+            { name: 'Engagement Makeup', gender: 'female' as const },
+            { name: 'Pre-Wedding Shoot Makeup', gender: 'female' as const },
+            { name: 'HD Makeup', gender: 'female' as const },
           ]
         },
         {
           title: 'Special Services',
           services: [
-            { name: 'Saree Draping', gender: 'female' },
-            { name: 'Hair Styling for Events', gender: 'female' },
-            { name: 'Mehendi Application', gender: 'female' },
-            { name: 'Makeup Trial', gender: 'female' },
+            { name: 'Saree Draping', gender: 'female' as const },
+            { name: 'Hair Styling for Events', gender: 'female' as const },
+            { name: 'Mehendi Application', gender: 'female' as const },
+            { name: 'Makeup Trial', gender: 'female' as const },
           ]
         }
       ]
@@ -148,12 +148,12 @@ const AllServices = () => {
         {
           title: 'Massage Therapy',
           services: [
-            { name: 'Head Massage', gender: 'unisex' },
-            { name: 'Neck & Shoulder Massage', gender: 'unisex' },
-            { name: 'Full Body Massage', gender: 'unisex' },
-            { name: 'Foot Massage', gender: 'unisex' },
-            { name: 'Hot Stone Massage', gender: 'unisex' },
-            { name: 'Aromatherapy Massage', gender: 'unisex' },
+            { name: 'Head Massage', gender: 'unisex' as const },
+            { name: 'Neck & Shoulder Massage', gender: 'unisex' as const },
+            { name: 'Full Body Massage', gender: 'unisex' as const },
+            { name: 'Foot Massage', gender: 'unisex' as const },
+            { name: 'Hot Stone Massage', gender: 'unisex' as const },
+            { name: 'Aromatherapy Massage', gender: 'unisex' as const },
           ]
         }
       ]
