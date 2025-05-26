@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import BookAppointmentDialog from './BookAppointmentDialog';
 
 interface Offer {
   id: string;
@@ -24,9 +25,8 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer }) => {
   const savings = offer.originalPrice - offer.discountedPrice;
   const savingsPercentage = Math.round((savings / offer.originalPrice) * 100);
 
-  const handleBookNow = () => {
-    // This would typically open a booking modal or navigate to booking page
-    console.log('Book offer:', offer.id);
+  const handleBookingSuccess = () => {
+    console.log('Offer booking was successful! Refresh booking lists here.');
   };
 
   return (
@@ -83,12 +83,14 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer }) => {
           </div>
 
           {/* Book Now Button */}
-          <Button 
-            onClick={handleBookNow}
-            className="w-full bg-gradient-salon hover:opacity-90 text-white font-semibold py-3"
-          >
-            Book Now
-          </Button>
+          <BookAppointmentDialog
+            trigger={
+              <Button className="w-full bg-gradient-salon hover:opacity-90 text-white font-semibold py-3">
+                Book Now
+              </Button>
+            }
+            onBookingSuccess={handleBookingSuccess}
+          />
         </CardContent>
       </Card>
     </motion.div>
