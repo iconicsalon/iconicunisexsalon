@@ -42,7 +42,8 @@ const BookingExample = () => {
           <p className="text-gray-600">Facial, skincare, and relaxation services</p>
         </div>
         
-        <div className="text-4xl mb-4">💅</div>
+        <div className="text-center p-6 bg-white rounded-lg shadow-lg">
+          <div className="text-4xl mb-4">💅</div>
           <h3 className="text-xl font-semibold mb-2">Nail Care</h3>
           <p className="text-gray-600">Professional manicure and pedicure services</p>
         </div>
