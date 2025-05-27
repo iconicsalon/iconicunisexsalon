@@ -12,13 +12,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { 
     setUser, 
     setSession, 
-    setLoading, 
     fetchProfile,
-    user,
     profile,
     isInitialized,
     initializeAuth,
-    setInitialized
+    clearState
   } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,34 +32,36 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('Auth state changed:', event, session?.user?.id || 'no user');
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user profile
-          const profile = await fetchProfile(session.user.id);
-          
-          // Check if we need to redirect for onboarding
-          if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
-            navigate('/onboarding');
-          } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
-            navigate('/');
-          }
-        } else {
-          // User signed out, clear state
-          setLoading(false);
+        if (event === 'SIGNED_OUT' || !session) {
+          console.log('User signed out or session ended');
+          clearState();
+          return;
         }
-        
-        if (!isInitialized) {
-          setInitialized(true);
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Fetch user profile
+            const profile = await fetchProfile(session.user.id);
+            
+            // Handle onboarding redirect
+            if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
+              navigate('/onboarding');
+            } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
+              navigate('/');
+            }
+          }
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [setUser, setSession, setLoading, fetchProfile, navigate, location.pathname, isInitialized, setInitialized]);
+  }, [setUser, setSession, fetchProfile, navigate, location.pathname, clearState]);
 
   return <>{children}</>;
 };

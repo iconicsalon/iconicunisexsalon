@@ -79,9 +79,25 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   signOut: async () => {
     try {
+      console.log('Starting logout process...');
+      
+      // Clear state first
+      set({
+        user: null,
+        session: null,
+        profile: null,
+        bookings: [],
+        isLoading: false,
+      });
+
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      get().clearState();
+      if (error) {
+        console.error('Error during Supabase sign out:', error);
+        throw error;
+      }
+      
+      console.log('Logout successful');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -148,6 +164,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   initializeAuth: async () => {
     try {
+      console.log('Initializing auth...');
       set({ isLoading: true });
       
       // Get current session
@@ -155,10 +172,18 @@ export const useUserStore = create<UserState>((set, get) => ({
       
       if (error) {
         console.error('Error getting session:', error);
+        set({ 
+          user: null,
+          session: null,
+          profile: null,
+          isLoading: false,
+          isInitialized: true 
+        });
         return;
       }
 
       if (session?.user) {
+        console.log('Found existing session for user:', session.user.id);
         set({ 
           session, 
           user: session.user,
@@ -166,9 +191,21 @@ export const useUserStore = create<UserState>((set, get) => ({
         
         // Fetch user profile
         await get().fetchProfile(session.user.id);
+      } else {
+        console.log('No active session found');
+        set({
+          user: null,
+          session: null,
+          profile: null,
+        });
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
+      set({
+        user: null,
+        session: null,
+        profile: null,
+      });
     } finally {
       set({ 
         isLoading: false,
@@ -178,6 +215,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   clearState: () => {
+    console.log('Clearing auth state');
     set({
       user: null,
       session: null,
