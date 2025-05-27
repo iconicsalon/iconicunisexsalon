@@ -13,7 +13,6 @@ import BookAppointmentDialog from '@/components/BookAppointmentDialog';
 
 const MyBookings = () => {
   const { user, profile, bookings, isLoading, fetchBookings } = useUserStore();
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const navigate = useNavigate();
 
@@ -28,6 +27,13 @@ const MyBookings = () => {
       fetchBookings(user.id).finally(() => setIsLoadingBookings(false));
     }
   }, [user, isLoading, navigate, fetchBookings]);
+
+  const handleBookingSuccess = () => {
+    // Refetch bookings after a new booking is created
+    if (user && user.id) {
+      fetchBookings(user.id);
+    }
+  };
 
   if (isLoading || !user) {
     return (
@@ -58,13 +64,15 @@ const MyBookings = () => {
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold gradient-text">My Bookings</h1>
-              <Button 
-                onClick={() => setBookingDialogOpen(true)}
-                className="bg-gradient-salon hover:opacity-90 transition-opacity"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Book Appointment
-              </Button>
+              <BookAppointmentDialog 
+                trigger={
+                  <Button className="bg-gradient-salon hover:opacity-90 transition-opacity">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Book Appointment
+                  </Button>
+                }
+                onBookingSuccess={handleBookingSuccess}
+              />
             </div>
 
             {isLoadingBookings ? (
@@ -79,13 +87,15 @@ const MyBookings = () => {
                   <p className="text-gray-600 mb-6">
                     You haven't booked any appointments yet. Start your beauty journey with us!
                   </p>
-                  <Button 
-                    onClick={() => setBookingDialogOpen(true)}
-                    className="bg-gradient-salon hover:opacity-90 transition-opacity"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Book Your First Appointment
-                  </Button>
+                  <BookAppointmentDialog 
+                    trigger={
+                      <Button className="bg-gradient-salon hover:opacity-90 transition-opacity">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Book Your First Appointment
+                      </Button>
+                    }
+                    onBookingSuccess={handleBookingSuccess}
+                  />
                 </CardContent>
               </Card>
             ) : (
@@ -143,11 +153,6 @@ const MyBookings = () => {
         </div>
       </main>
       <Footer />
-      
-      <BookAppointmentDialog 
-        open={bookingDialogOpen} 
-        onOpenChange={setBookingDialogOpen} 
-      />
     </div>
   );
 };
