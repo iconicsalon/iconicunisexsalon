@@ -48,6 +48,8 @@ export type Database = {
           email_id: string
           full_name: string
           id: string
+          instagram_id: string | null
+          onboarding_completed: boolean | null
           phone_number: string | null
           updated_at: string | null
         }
@@ -56,6 +58,8 @@ export type Database = {
           email_id: string
           full_name: string
           id: string
+          instagram_id?: string | null
+          onboarding_completed?: boolean | null
           phone_number?: string | null
           updated_at?: string | null
         }
@@ -64,6 +68,8 @@ export type Database = {
           email_id?: string
           full_name?: string
           id?: string
+          instagram_id?: string | null
+          onboarding_completed?: boolean | null
           phone_number?: string | null
           updated_at?: string | null
         }

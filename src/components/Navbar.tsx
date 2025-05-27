@@ -9,10 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useUserStore } from '@/stores/userStore';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // This will be connected to Supabase later
+  const { user, profile, signInWithGoogle, signOut } = useUserStore();
+  const { toast } = useToast();
 
   const navigation = [
     { name: 'Home', href: '#home' },
@@ -21,14 +24,32 @@ const Navbar = () => {
     { name: 'Contact', href: '#contact' },
   ];
 
-  const handleGoogleLogin = () => {
-    // This will be connected to Supabase Auth later
-    console.log('Google login triggered');
-    setIsLoggedIn(true);
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      toast({
+        title: 'Sign In Failed',
+        description: 'There was an error signing in with Google. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: 'Signed Out',
+        description: 'You have been successfully signed out.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'There was an error signing out. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -62,7 +83,7 @@ const Navbar = () => {
               <a href="tel:+919876543210">Call Now</a>
             </Button>
             
-            {!isLoggedIn ? (
+            {!user ? (
               <Button 
                 onClick={handleGoogleLogin}
                 className="bg-gradient-salon hover:opacity-90 transition-opacity"
@@ -74,7 +95,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Account
+                    {profile?.full_name || 'Account'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -127,7 +148,7 @@ const Navbar = () => {
                     <a href="tel:+919876543210">Call Now</a>
                   </Button>
                   
-                  {!isLoggedIn ? (
+                  {!user ? (
                     <Button 
                       onClick={handleGoogleLogin}
                       className="w-full bg-gradient-salon hover:opacity-90 transition-opacity"
