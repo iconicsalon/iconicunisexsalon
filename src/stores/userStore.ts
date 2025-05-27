@@ -19,14 +19,18 @@ interface UserState {
   session: Session | null;
   profile: Profile | null;
   isLoading: boolean;
+  isInitialized: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  initializeAuth: () => Promise<void>;
+  clearState: () => void;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -34,11 +38,13 @@ export const useUserStore = create<UserState>((set, get) => ({
   session: null,
   profile: null,
   isLoading: true,
+  isInitialized: false,
 
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
   setLoading: (isLoading) => set({ isLoading }),
+  setInitialized: (isInitialized) => set({ isInitialized }),
 
   signInWithGoogle: async () => {
     try {
@@ -59,7 +65,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      set({ user: null, session: null, profile: null });
+      get().clearState();
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -103,5 +109,45 @@ export const useUserStore = create<UserState>((set, get) => ({
       console.error('Error updating profile:', error);
       throw error;
     }
+  },
+
+  initializeAuth: async () => {
+    try {
+      set({ isLoading: true });
+      
+      // Get current session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        return;
+      }
+
+      if (session?.user) {
+        set({ 
+          session, 
+          user: session.user,
+        });
+        
+        // Fetch user profile
+        await get().fetchProfile(session.user.id);
+      }
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+    } finally {
+      set({ 
+        isLoading: false,
+        isInitialized: true 
+      });
+    }
+  },
+
+  clearState: () => {
+    set({
+      user: null,
+      session: null,
+      profile: null,
+      isLoading: false,
+    });
   },
 }));

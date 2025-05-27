@@ -15,10 +15,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading, 
     fetchProfile,
     user,
-    profile 
+    profile,
+    isInitialized,
+    initializeAuth,
+    setInitialized
   } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // Initialize auth state on app load
+    if (!isInitialized) {
+      initializeAuth();
+    }
+  }, [isInitialized, initializeAuth]);
 
   useEffect(() => {
     // Set up auth state listener
@@ -39,24 +49,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
             navigate('/');
           }
+        } else {
+          // User signed out, clear state
+          setLoading(false);
         }
         
-        setLoading(false);
+        if (!isInitialized) {
+          setInitialized(true);
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
-  }, [setUser, setSession, setLoading, fetchProfile, navigate, location.pathname]);
+  }, [setUser, setSession, setLoading, fetchProfile, navigate, location.pathname, isInitialized, setInitialized]);
 
   return <>{children}</>;
 };
