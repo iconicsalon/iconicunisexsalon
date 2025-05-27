@@ -14,20 +14,34 @@ interface Profile {
   updated_at: string;
 }
 
+interface Booking {
+  id: string;
+  user_id: string;
+  booking_date: string;
+  services: string[];
+  status: string;
+  total_amount: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UserState {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  bookings: Booking[];
   isLoading: boolean;
   isInitialized: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
+  setBookings: (bookings: Booking[]) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
+  fetchBookings: (userId: string) => Promise<Booking[]>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   initializeAuth: () => Promise<void>;
   clearState: () => void;
@@ -37,12 +51,14 @@ export const useUserStore = create<UserState>((set, get) => ({
   user: null,
   session: null,
   profile: null,
+  bookings: [],
   isLoading: true,
   isInitialized: false,
 
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
+  setBookings: (bookings) => set({ bookings }),
   setLoading: (isLoading) => set({ isLoading }),
   setInitialized: (isInitialized) => set({ isInitialized }),
 
@@ -87,6 +103,25 @@ export const useUserStore = create<UserState>((set, get) => ({
     } catch (error) {
       console.error('Error fetching profile:', error);
       return null;
+    }
+  },
+
+  fetchBookings: async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('user_id', userId)
+        .order('booking_date', { ascending: false });
+
+      if (error) throw error;
+      
+      set({ bookings: data || [] });
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      set({ bookings: [] });
+      return [];
     }
   },
 
@@ -147,6 +182,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       user: null,
       session: null,
       profile: null,
+      bookings: [],
       isLoading: false,
     });
   },

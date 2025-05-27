@@ -101,13 +101,17 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    My Bookings
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-bookings" className="flex items-center w-full">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      My Bookings
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <User className="h-4 w-4 mr-2" />
-                    My Profile
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-profile" className="flex items-center w-full">
+                      <User className="h-4 w-4 mr-2" />
+                      My Profile
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -161,14 +165,18 @@ const Navbar = () => {
                     </Button>
                   ) : (
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        My Bookings
-                      </Button>
-                      <Button variant="outline" className="w-full flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        My Profile
-                      </Button>
+                      <Link to="/my-bookings" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          My Bookings
+                        </Button>
+                      </Link>
+                      <Link to="/my-profile" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          My Profile
+                        </Button>
+                      </Link>
                       <Button 
                         onClick={handleLogout}
                         variant="outline" 
