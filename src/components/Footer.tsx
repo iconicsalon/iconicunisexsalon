@@ -33,7 +33,7 @@ const Footer = () => {
     'Facials & Skincare',
     'Massage Therapy',
     'Nail Care',
-    'Makeup Services'
+    'Waxing Services'
   ];
 
   const quickLinks = [
@@ -44,6 +44,12 @@ const Footer = () => {
     'Gallery',
     'Reviews'
   ];
+
+  const PinterestIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.374 0 0 5.374 0 12s5.374 12 12 12c.344 0 .688-.014 1.025-.042C12.696 21.851 12.37 19.743 12.73 18.119c.4-1.8 2.632-11.166 2.632-11.166s-.672-1.344-.672-3.33c0-3.118 1.806-5.442 4.056-5.442 1.912 0 2.835 1.434 2.835 3.156 0 1.922-1.224 4.794-1.854 7.458-.528 2.226.336 4.042 2.52 4.042 3.024 0 5.058-3.888 5.058-8.514 0-3.516-2.376-6.156-6.672-6.156-4.86 0-7.884 3.6-7.884 7.632 0 1.386.402 2.364 1.044 3.126.294.36.336.504.228.918-.078.3-.258 1.026-.336 1.314-.102.378-.414.516-.756.378-2.094-.882-3.072-3.234-3.072-5.886 0-4.374 3.672-9.672 10.92-9.672 5.814 0 9.648 4.176 9.648 8.658 0 5.934-3.294 10.404-8.148 10.404-1.632 0-3.168-.888-3.696-1.932 0 0-.84 3.348-1.026 4.056-.306 1.152-1.128 2.604-1.794 3.6C9.75 23.88 10.854 24 12 24c6.626 0 12-5.374 12-12S18.626 0 12 0z"/>
+    </svg>
+  );
 
   return (
     <footer className="bg-salon-dark text-white relative overflow-hidden">
@@ -65,6 +71,9 @@ const Footer = () => {
               <div className="flex space-x-4">
                 <Button size="sm" variant="outline" className="border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white">
                   <Instagram className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" className="border-salon-gold text-salon-gold hover:bg-salon-gold hover:text-white">
+                  <PinterestIcon className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="outline" className="border-salon-rose text-salon-rose hover:bg-salon-rose hover:text-white">
                   <MessageCircle className="h-4 w-4" />

@@ -40,13 +40,6 @@ const PremiumServices = () => {
       videoUrl: '/videos/nails.mp4',
     },
     {
-      title: 'Makeup Services',
-      icon: '💄',
-      category: 'female' as const,
-      description: 'Professional makeup for special occasions',
-      videoUrl: '/videos/makeup.mp4',
-    },
-    {
       title: 'Massage & Relaxation',
       icon: '🧘',
       category: 'unisex' as const,

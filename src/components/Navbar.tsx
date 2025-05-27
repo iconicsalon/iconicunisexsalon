@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Phone, User, Calendar, LogOut } from 'lucide-react';
@@ -18,10 +19,11 @@ const Navbar = () => {
   const { toast } = useToast();
 
   const navigation = [
-    { name: 'Home', href: '#home' },
-    { name: 'Services', href: '#services' },
-    { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Home', href: '/' },
+    { name: 'Offers', href: '/offers' },
+    { name: 'Services', href: '/all-services' },
+    { name: 'About Us', href: '/about' },
+    { name: 'Contact Us', href: '/contact' },
   ];
 
   const handleGoogleLogin = async () => {
@@ -58,21 +60,21 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-xl font-bold gradient-text">
+            <Link to="/" className="text-xl font-bold gradient-text">
               Iconic Unisex Salon
-            </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href={item.href}
+                to={item.href}
                 className="text-gray-700 hover:text-salon-purple transition-colors duration-200 font-medium"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -126,19 +128,21 @@ const Navbar = () => {
             <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <div className="flex flex-col space-y-6 mt-6">
                 <div className="text-lg font-semibold gradient-text">
-                  Iconic Unisex Salon
+                  <Link to="/" onClick={() => setIsOpen(false)}>
+                    Iconic Unisex Salon
+                  </Link>
                 </div>
                 
                 <nav className="flex flex-col space-y-4">
                   {navigation.map((item) => (
-                    <a
+                    <Link
                       key={item.name}
-                      href={item.href}
+                      to={item.href}
                       className="text-gray-700 hover:text-salon-purple transition-colors duration-200 font-medium py-2"
                       onClick={() => setIsOpen(false)}
                     >
                       {item.name}
-                    </a>
+                    </Link>
                   ))}
                 </nav>
 
