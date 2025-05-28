@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
@@ -10,6 +9,7 @@ interface Profile {
   phone_number: string | null;
   instagram_id: string | null;
   onboarding_completed: boolean;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
