@@ -6,9 +6,13 @@ import TestimonialCarousel from '@/components/TestimonialCarousel';
 import GoogleReviews from '@/components/GoogleReviews';
 import Footer from '@/components/Footer';
 import BookAppointmentDialog from '@/components/BookAppointmentDialog';
+import AdminTest from '@/components/AdminTest';
 import { Button } from '@/components/ui/button';
+import { useUserStore } from '@/stores/userStore';
 
 const Index = () => {
+  const { user } = useUserStore();
+  
   const handleBookingSuccess = () => {
     console.log('Booking was successful! Refresh booking lists here.');
   };
@@ -36,6 +40,15 @@ const Index = () => {
             />
           </div>
         </section>
+
+        {/* Admin Test Section - Only show for logged in users */}
+        {user && (
+          <section className="py-8 bg-gray-50">
+            <div className="container mx-auto px-4">
+              <AdminTest />
+            </div>
+          </section>
+        )}
 
         <PremiumServices />
         <TestimonialCarousel />

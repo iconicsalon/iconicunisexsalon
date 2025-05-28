@@ -16,7 +16,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     isInitialized,
     initializeAuth,
-    clearState
+    clearState,
+    setLoading
   } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,14 +47,25 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(session?.user ?? null);
           
           if (session?.user) {
-            // Fetch user profile
-            const profile = await fetchProfile(session.user.id);
+            // Set loading while fetching profile
+            setLoading(true);
             
-            // Handle onboarding redirect
-            if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
-              navigate('/onboarding');
-            } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
-              navigate('/');
+            try {
+              // Fetch user profile
+              const profile = await fetchProfile(session.user.id);
+              
+              console.log('Profile fetched:', profile);
+              
+              // Handle onboarding redirect
+              if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
+                navigate('/onboarding');
+              } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
+                navigate('/');
+              }
+            } catch (error) {
+              console.error('Error fetching profile:', error);
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -61,7 +73,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 
     return () => subscription.unsubscribe();
-  }, [setUser, setSession, fetchProfile, navigate, location.pathname, clearState]);
+  }, [setUser, setSession, fetchProfile, navigate, location.pathname, clearState, setLoading]);
 
   return <>{children}</>;
 };

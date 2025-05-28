@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, signInWithGoogle, signOut } = useUserStore();
+  const { user, profile, signInWithGoogle, signOut, isLoading } = useUserStore();
   const { toast } = useToast();
 
   const navigation = [
@@ -55,6 +55,15 @@ const Navbar = () => {
     }
   };
 
+  // Get display name - prioritize profile full_name, fallback to user display_name or email
+  const getDisplayName = () => {
+    if (profile?.full_name) return profile.full_name;
+    if (user?.user_metadata?.full_name) return user.user_metadata.full_name;
+    if (user?.user_metadata?.name) return user.user_metadata.name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'Account';
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,16 +98,17 @@ const Navbar = () => {
             {!user ? (
               <Button 
                 onClick={handleGoogleLogin}
+                disabled={isLoading}
                 className="bg-gradient-salon hover:opacity-90 transition-opacity"
               >
-                Sign in with Google
+                {isLoading ? 'Signing in...' : 'Sign in with Google'}
               </Button>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    {profile?.full_name || 'Account'}
+                    {getDisplayName()}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -172,12 +182,16 @@ const Navbar = () => {
                   {!user ? (
                     <Button 
                       onClick={handleGoogleLogin}
+                      disabled={isLoading}
                       className="w-full bg-gradient-salon hover:opacity-90 transition-opacity"
                     >
-                      Sign in with Google
+                      {isLoading ? 'Signing in...' : 'Sign in with Google'}
                     </Button>
                   ) : (
                     <div className="space-y-2">
+                      <div className="text-sm text-gray-600 px-2 py-1">
+                        Welcome, {getDisplayName()}
+                      </div>
                       <Link to="/my-bookings" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
