@@ -49,6 +49,7 @@ export type Database = {
           full_name: string
           id: string
           instagram_id: string | null
+          is_admin: boolean | null
           onboarding_completed: boolean | null
           phone_number: string | null
           updated_at: string | null
@@ -59,6 +60,7 @@ export type Database = {
           full_name: string
           id: string
           instagram_id?: string | null
+          is_admin?: boolean | null
           onboarding_completed?: boolean | null
           phone_number?: string | null
           updated_at?: string | null
@@ -69,6 +71,7 @@ export type Database = {
           full_name?: string
           id?: string
           instagram_id?: string | null
+          is_admin?: boolean | null
           onboarding_completed?: boolean | null
           phone_number?: string | null
           updated_at?: string | null

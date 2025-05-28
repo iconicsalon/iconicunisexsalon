@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Phone, User, Calendar, LogOut } from 'lucide-react';
+import { Menu, Phone, User, Calendar, LogOut, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/stores/userStore';
 import { useToast } from '@/hooks/use-toast';
@@ -113,6 +114,18 @@ const Navbar = () => {
                       My Profile
                     </Link>
                   </DropdownMenuItem>
+                  {profile?.is_admin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/dashboard" className="flex items-center w-full">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -177,6 +190,14 @@ const Navbar = () => {
                           My Profile
                         </Button>
                       </Link>
+                      {profile?.is_admin && (
+                        <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
                       <Button 
                         onClick={handleLogout}
                         variant="outline" 

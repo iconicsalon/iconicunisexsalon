@@ -14,6 +14,9 @@ import Onboarding from "./pages/Onboarding";
 import AuthCallback from "./pages/AuthCallback";
 import MyBookings from "./pages/MyBookings";
 import MyProfile from "./pages/MyProfile";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminBookings from "./pages/AdminBookings";
+import AdminCustomers from "./pages/AdminCustomers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +38,9 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/my-profile" element={<MyProfile />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/bookings" element={<AdminBookings />} />
+            <Route path="/admin/customers" element={<AdminCustomers />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
