@@ -6,48 +6,42 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { 
-  Search, 
-  User, 
-  Calendar, 
-  Copy,
-  Phone,
-  Mail
-} from 'lucide-react';
+import { Search, Copy, User, Calendar } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Customer {
   id: string;
   full_name: string;
   email_id: string;
   phone_number: string | null;
-  instagram_id: string | null;
-  onboarding_completed: boolean;
   created_at: string;
+  bookings?: Booking[];
 }
 
-interface CustomerBooking {
+interface Booking {
   id: string;
   booking_date: string;
   services: string[];
   status: string;
   total_amount: number | null;
-  created_at: string;
-}
-
-interface CustomerWithBookings extends Customer {
-  bookings: CustomerBooking[];
 }
 
 const AdminCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithBookings | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const { toast } = useToast();
 
   const fetchCustomers = async () => {
@@ -70,7 +64,6 @@ const AdminCustomers = () => {
 
   const fetchCustomerBookings = async (customerId: string) => {
     try {
-      setIsLoadingBookings(true);
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
@@ -82,40 +75,33 @@ const AdminCustomers = () => {
     } catch (error) {
       console.error('Error fetching customer bookings:', error);
       return [];
-    } finally {
-      setIsLoadingBookings(false);
     }
   };
 
   const handleCustomerClick = async (customer: Customer) => {
     const bookings = await fetchCustomerBookings(customer.id);
-    setSelectedCustomer({
-      ...customer,
-      bookings,
-    });
+    setSelectedCustomer({ ...customer, bookings });
   };
 
-  const copyCustomerData = () => {
-    if (!selectedCustomer) return;
-
-    const customerData = {
-      user: {
-        id: selectedCustomer.id,
-        full_name: selectedCustomer.full_name,
-        email_id: selectedCustomer.email_id,
-        phone_number: selectedCustomer.phone_number,
-        instagram_id: selectedCustomer.instagram_id,
-        onboarding_completed: selectedCustomer.onboarding_completed,
-        created_at: selectedCustomer.created_at,
-      },
-      bookings: selectedCustomer.bookings,
-    };
-
-    navigator.clipboard.writeText(JSON.stringify(customerData, null, 2));
-    toast({
-      title: 'Copied to Clipboard',
-      description: 'Customer data has been copied as JSON.',
-    });
+  const copyCustomerJSON = () => {
+    if (selectedCustomer) {
+      const customerData = {
+        user: {
+          id: selectedCustomer.id,
+          full_name: selectedCustomer.full_name,
+          email_id: selectedCustomer.email_id,
+          phone_number: selectedCustomer.phone_number,
+          created_at: selectedCustomer.created_at
+        },
+        bookings: selectedCustomer.bookings || []
+      };
+      
+      navigator.clipboard.writeText(JSON.stringify(customerData, null, 2));
+      toast({
+        title: 'Copied!',
+        description: 'Customer data copied to clipboard as JSON',
+      });
+    }
   };
 
   useEffect(() => {
@@ -155,8 +141,8 @@ const AdminCustomers = () => {
         
         <main className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-            <p className="text-gray-600 mt-2">View and manage customer information</p>
+            <h1 className="text-3xl font-bold text-gray-900">Customer Management</h1>
+            <p className="text-gray-600 mt-2">View customer information and booking history</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -181,59 +167,60 @@ const AdminCustomers = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-salon-purple"></div>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {filteredCustomers.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No customers found</p>
-                    ) : (
-                      filteredCustomers.map((customer) => (
-                        <div
-                          key={customer.id}
-                          onClick={() => handleCustomerClick(customer)}
-                          className={`p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedCustomer?.id === customer.id ? 'bg-salon-purple/10 border-salon-purple' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <User className="h-8 w-8 text-gray-400" />
-                              <div>
-                                <h3 className="font-medium">{customer.full_name}</h3>
-                                <p className="text-sm text-gray-600">{customer.email_id}</p>
-                                {customer.phone_number && (
-                                  <p className="text-sm text-gray-600">{customer.phone_number}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant={customer.onboarding_completed ? "default" : "secondary"}>
-                                {customer.onboarding_completed ? "Active" : "Pending"}
-                              </Badge>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Joined {format(new Date(customer.created_at), 'MMM yyyy')}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Joined</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredCustomers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-8">
+                              No customers found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredCustomers.map((customer) => (
+                            <TableRow 
+                              key={customer.id}
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleCustomerClick(customer)}
+                            >
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{customer.full_name}</div>
+                                  <div className="text-sm text-gray-500">{customer.email_id}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {customer.phone_number || 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
-                
-                <div className="mt-4 text-sm text-gray-500">
-                  Showing {filteredCustomers.length} of {customers.length} customers
-                </div>
               </CardContent>
             </Card>
 
             {/* Customer Details */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Customer Details</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  Customer Details
                   {selectedCustomer && (
-                    <Button
-                      onClick={copyCustomerData}
-                      variant="outline"
+                    <Button 
+                      onClick={copyCustomerJSON}
+                      variant="outline" 
                       size="sm"
                       className="flex items-center gap-2"
                     >
@@ -241,66 +228,48 @@ const AdminCustomers = () => {
                       Copy JSON
                     </Button>
                   )}
-                </div>
+                </CardTitle>
               </CardHeader>
               
               <CardContent>
                 {!selectedCustomer ? (
-                  <div className="text-center py-8">
-                    <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Select a customer to view details</p>
+                  <div className="text-center py-8 text-gray-500">
+                    <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Select a customer to view details</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Customer Info */}
-                    <div className="space-y-3">
-                      <h3 className="font-semibold text-lg">{selectedCustomer.full_name}</h3>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm">{selectedCustomer.email_id}</span>
-                        </div>
-                        
-                        {selectedCustomer.phone_number && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">{selectedCustomer.phone_number}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm">
-                            Joined {format(new Date(selectedCustomer.created_at), 'MMM d, yyyy')}
-                          </span>
-                        </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-2">{selectedCustomer.full_name}</h3>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Email:</span> {selectedCustomer.email_id}</p>
+                        <p><span className="font-medium">Phone:</span> {selectedCustomer.phone_number || 'N/A'}</p>
+                        <p><span className="font-medium">Joined:</span> {format(new Date(selectedCustomer.created_at), 'MMM d, yyyy')}</p>
                       </div>
                     </div>
 
                     {/* Booking History */}
                     <div>
-                      <h4 className="font-medium mb-3">Booking History ({selectedCustomer.bookings.length})</h4>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Booking History ({selectedCustomer.bookings?.length || 0})
+                      </h4>
                       
-                      {isLoadingBookings ? (
-                        <div className="flex justify-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-salon-purple"></div>
-                        </div>
-                      ) : selectedCustomer.bookings.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No bookings yet</p>
+                      {(!selectedCustomer.bookings || selectedCustomer.bookings.length === 0) ? (
+                        <p className="text-gray-500 text-center py-4">No bookings found</p>
                       ) : (
-                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                        <div className="space-y-3">
                           {selectedCustomer.bookings.map((booking) => (
                             <div key={booking.id} className="p-3 border rounded-lg">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="font-medium">
                                   {format(new Date(booking.booking_date), 'MMM d, yyyy')}
                                 </span>
-                                <Badge className={getStatusColor(booking.status)}>
-                                  {booking.status}
+                                <Badge className={getStatusColor(booking.status || 'pending')}>
+                                  {booking.status || 'pending'}
                                 </Badge>
                               </div>
-                              
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {booking.services.map((service, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
@@ -308,9 +277,8 @@ const AdminCustomers = () => {
                                   </Badge>
                                 ))}
                               </div>
-                              
                               {booking.total_amount && (
-                                <p className="text-sm font-semibold text-salon-purple">
+                                <p className="text-sm font-medium text-salon-purple">
                                   ₹{booking.total_amount}
                                 </p>
                               )}

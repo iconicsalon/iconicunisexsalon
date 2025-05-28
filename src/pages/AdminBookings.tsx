@@ -27,11 +27,9 @@ interface Booking {
   status: string;
   total_amount: number | null;
   created_at: string;
-  profiles: {
-    full_name: string;
-    phone_number: string | null;
-    email_id: string;
-  };
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
 }
 
 const AdminBookings = () => {
@@ -45,17 +43,35 @@ const AdminBookings = () => {
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // First get bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          profiles!inner(full_name, phone_number, email_id)
-        `)
+        .select('*')
         .order('booking_date', { ascending: false });
 
-      if (error) throw error;
-      setBookings(data || []);
-      setFilteredBookings(data || []);
+      if (bookingsError) throw bookingsError;
+
+      // Then get user profiles for each booking
+      const bookingsWithProfiles: Booking[] = [];
+      
+      for (const booking of bookingsData || []) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, phone_number, email_id')
+          .eq('id', booking.user_id)
+          .single();
+
+        bookingsWithProfiles.push({
+          ...booking,
+          customer_name: profile?.full_name || 'Unknown',
+          customer_email: profile?.email_id || 'Unknown',
+          customer_phone: profile?.phone_number || 'N/A'
+        });
+      }
+
+      setBookings(bookingsWithProfiles);
+      setFilteredBookings(bookingsWithProfiles);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
@@ -73,9 +89,9 @@ const AdminBookings = () => {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(booking =>
-        booking.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.profiles.phone_number?.includes(searchTerm) ||
-        booking.profiles.email_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.customer_phone?.includes(searchTerm) ||
+        booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.services.some(service => 
           service.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -201,12 +217,12 @@ const AdminBookings = () => {
                           <TableRow key={booking.id}>
                             <TableCell>
                               <div>
-                                <div className="font-medium">{booking.profiles.full_name}</div>
-                                <div className="text-sm text-gray-500">{booking.profiles.email_id}</div>
+                                <div className="font-medium">{booking.customer_name}</div>
+                                <div className="text-sm text-gray-500">{booking.customer_email}</div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              {booking.profiles.phone_number || 'N/A'}
+                              {booking.customer_phone}
                             </TableCell>
                             <TableCell>
                               {format(new Date(booking.booking_date), 'MMM d, yyyy')}
@@ -221,8 +237,8 @@ const AdminBookings = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getStatusColor(booking.status)}>
-                                {booking.status}
+                              <Badge className={getStatusColor(booking.status || 'pending')}>
+                                {booking.status || 'pending'}
                               </Badge>
                             </TableCell>
                             <TableCell>

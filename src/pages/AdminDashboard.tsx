@@ -33,10 +33,8 @@ interface Booking {
   status: string;
   total_amount: number | null;
   created_at: string;
-  profiles: {
-    full_name: string;
-    phone_number: string | null;
-  };
+  customer_name?: string;
+  customer_phone?: string;
 }
 
 const AdminDashboard = () => {
@@ -74,29 +72,40 @@ const AdminDashboard = () => {
       const monthStart = startOfMonth(new Date(selectedMonth));
       const monthEnd = endOfMonth(new Date(selectedMonth));
 
-      // Fetch all bookings with profiles
+      // Fetch all bookings
       const { data: allBookings, error: allError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          profiles!inner(full_name, phone_number)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (allError) throw allError;
 
       // Fetch monthly bookings
-      const { data: monthlyBookings, error: monthlyError } = await supabase
+      const { data: monthlyBookingsData, error: monthlyError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          profiles!inner(full_name, phone_number)
-        `)
+        .select('*')
         .gte('booking_date', format(monthStart, 'yyyy-MM-dd'))
         .lte('booking_date', format(monthEnd, 'yyyy-MM-dd'))
         .order('booking_date', { ascending: false });
 
       if (monthlyError) throw monthlyError;
+
+      // Get profiles for recent bookings
+      const recentBookingsWithProfiles: Booking[] = [];
+      
+      for (const booking of (monthlyBookingsData || []).slice(0, 10)) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, phone_number')
+          .eq('id', booking.user_id)
+          .single();
+
+        recentBookingsWithProfiles.push({
+          ...booking,
+          customer_name: profile?.full_name || 'Unknown',
+          customer_phone: profile?.phone_number || 'N/A'
+        });
+      }
 
       // Calculate stats
       let menCount = 0;
@@ -123,13 +132,13 @@ const AdminDashboard = () => {
 
       setStats({
         totalBookings: allBookings?.length || 0,
-        monthlyBookings: monthlyBookings?.length || 0,
+        monthlyBookings: monthlyBookingsData?.length || 0,
         menBookings: menCount,
         womenBookings: womenCount,
         totalRevenue,
       });
 
-      setRecentBookings(monthlyBookings?.slice(0, 10) || []);
+      setRecentBookings(recentBookingsWithProfiles);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -253,9 +262,9 @@ const AdminDashboard = () => {
                     <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-medium">{booking.profiles.full_name}</h3>
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status}
+                          <h3 className="font-medium">{booking.customer_name}</h3>
+                          <Badge className={getStatusColor(booking.status || 'pending')}>
+                            {booking.status || 'pending'}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
@@ -275,11 +284,9 @@ const AdminDashboard = () => {
                             ₹{booking.total_amount}
                           </p>
                         )}
-                        {booking.profiles.phone_number && (
-                          <p className="text-sm text-gray-600">
-                            {booking.profiles.phone_number}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-600">
+                          {booking.customer_phone}
+                        </p>
                       </div>
                     </div>
                   ))}
