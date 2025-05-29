@@ -13,7 +13,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser, 
     setSession, 
     fetchProfile,
-    profile,
     isInitialized,
     initializeAuth,
     clearState,
@@ -25,6 +24,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Initialize auth state on app load
     if (!isInitialized) {
+      console.log('Initializing auth...');
       initializeAuth();
     }
   }, [isInitialized, initializeAuth]);
@@ -36,8 +36,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed:', event, session?.user?.id || 'no user');
         
         if (event === 'SIGNED_OUT' || !session) {
-          console.log('User signed out or session ended');
+          console.log('User signed out or session ended - clearing state');
           clearState();
+          
+          // Force navigation to home if on protected routes
+          if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/my-')) {
+            navigate('/');
+          }
           return;
         }
 
@@ -47,26 +52,29 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(session?.user ?? null);
           
           if (session?.user) {
-            // Set loading while fetching profile
+            console.log('Fetching profile for user:', session.user.id);
             setLoading(true);
             
-            try {
-              // Fetch user profile
-              const profile = await fetchProfile(session.user.id);
-              
-              console.log('Profile fetched:', profile);
-              
-              // Handle onboarding redirect
-              if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
-                navigate('/onboarding');
-              } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
-                navigate('/');
+            // Use setTimeout to avoid potential callback issues
+            setTimeout(async () => {
+              try {
+                const profile = await fetchProfile(session.user.id);
+                console.log('Profile fetched successfully:', profile);
+                
+                // Handle onboarding redirect
+                if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
+                  console.log('Redirecting to onboarding');
+                  navigate('/onboarding');
+                } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
+                  console.log('Redirecting to home from onboarding');
+                  navigate('/');
+                }
+              } catch (error) {
+                console.error('Error fetching profile:', error);
+              } finally {
+                setLoading(false);
               }
-            } catch (error) {
-              console.error('Error fetching profile:', error);
-            } finally {
-              setLoading(false);
-            }
+            }, 0);
           }
         }
       }

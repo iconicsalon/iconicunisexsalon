@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
@@ -55,15 +56,25 @@ export const useUserStore = create<UserState>((set, get) => ({
   isLoading: true,
   isInitialized: false,
 
-  setUser: (user) => set({ user }),
-  setSession: (session) => set({ session }),
-  setProfile: (profile) => set({ profile }),
+  setUser: (user) => {
+    console.log('Setting user:', user?.id || 'null');
+    set({ user });
+  },
+  setSession: (session) => {
+    console.log('Setting session:', session?.user?.id || 'null');
+    set({ session });
+  },
+  setProfile: (profile) => {
+    console.log('Setting profile:', profile?.full_name || 'null');
+    set({ profile });
+  },
   setBookings: (bookings) => set({ bookings }),
   setLoading: (isLoading) => set({ isLoading }),
   setInitialized: (isInitialized) => set({ isInitialized }),
 
   signInWithGoogle: async () => {
     try {
+      console.log('Starting Google sign in...');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -81,43 +92,46 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       console.log('Starting logout process...');
       
-      // Clear state first
-      set({
-        user: null,
-        session: null,
-        profile: null,
-        bookings: [],
-        isLoading: false,
-      });
-
-      // Then sign out from Supabase
+      // Sign out from Supabase first
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error during Supabase sign out:', error);
         throw error;
       }
       
+      // Clear state after successful signout
+      get().clearState();
+      
       console.log('Logout successful');
     } catch (error) {
       console.error('Error signing out:', error);
+      // Clear state even if signout fails to prevent stuck state
+      get().clearState();
       throw error;
     }
   },
 
   fetchProfile: async (userId: string) => {
     try {
+      console.log('Fetching profile for user ID:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
       
+      console.log('Profile data received:', data);
       set({ profile: data });
       return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      set({ profile: null });
       return null;
     }
   },
@@ -164,7 +178,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   initializeAuth: async () => {
     try {
-      console.log('Initializing auth...');
+      console.log('Initializing auth state...');
       set({ isLoading: true });
       
       // Get current session
@@ -190,7 +204,11 @@ export const useUserStore = create<UserState>((set, get) => ({
         });
         
         // Fetch user profile
-        await get().fetchProfile(session.user.id);
+        try {
+          await get().fetchProfile(session.user.id);
+        } catch (profileError) {
+          console.error('Error fetching profile during init:', profileError);
+        }
       } else {
         console.log('No active session found');
         set({
@@ -215,7 +233,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   clearState: () => {
-    console.log('Clearing auth state');
+    console.log('Clearing all auth state');
     set({
       user: null,
       session: null,
