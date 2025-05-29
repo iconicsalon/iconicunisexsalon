@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
@@ -123,7 +122,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // Don't throw error, just return null for missing profiles
         set({ profile: null });
         return null;
       }
@@ -162,16 +160,59 @@ export const useUserStore = create<UserState>((set, get) => ({
     if (!user) throw new Error('No user logged in');
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      console.log('Updating profile with:', updates);
       
-      set({ profile: data });
+      // Check if profile exists first
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      let result;
+      
+      if (existingProfile) {
+        // Update existing profile
+        console.log('Updating existing profile');
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      } else {
+        // Create new profile
+        console.log('Creating new profile');
+        const profileData = {
+          id: user.id,
+          email_id: user.email || '',
+          full_name: updates.full_name || '',
+          phone_number: updates.phone_number || null,
+          instagram_id: updates.instagram_id || null,
+          onboarding_completed: updates.onboarding_completed || false,
+          is_admin: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert(profileData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      }
+      
+      console.log('Profile operation successful:', result);
+      set({ profile: result });
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
