@@ -12,8 +12,9 @@ import { User, Mail, Phone, Instagram, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const MyProfile = () => {
-  const { user, profile, isLoading, updateProfile, fetchProfile } = useUserStore();
+  const { user, profile, isLoading, updateProfile, fetchProfile, isInitialized } = useUserStore();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
@@ -23,23 +24,47 @@ const MyProfile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    // Wait for auth to be initialized
+    if (!isInitialized) return;
+
+    // If no user after initialization, redirect to home
+    if (!user) {
+      console.log('No user found, redirecting to home');
       navigate('/');
       return;
     }
 
-    if (user && !profile) {
-      fetchProfile(user.id);
-    }
+    // Fetch profile if user exists but profile is not loaded
+    const loadProfile = async () => {
+      if (user && !profile) {
+        console.log('Fetching profile for MyProfile page');
+        setIsProfileLoading(true);
+        try {
+          await fetchProfile(user.id);
+        } catch (error) {
+          console.error('Error fetching profile in MyProfile:', error);
+        } finally {
+          setIsProfileLoading(false);
+        }
+      } else if (profile) {
+        setIsProfileLoading(false);
+      }
+    };
 
+    loadProfile();
+  }, [user, profile, isInitialized, navigate, fetchProfile]);
+
+  useEffect(() => {
+    // Update form data when profile is loaded
     if (profile) {
+      console.log('Setting form data from profile:', profile);
       setFormData({
         full_name: profile.full_name || '',
         phone_number: profile.phone_number || '',
         instagram_id: profile.instagram_id || '',
       });
     }
-  }, [user, profile, isLoading, navigate, fetchProfile]);
+  }, [profile]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -70,15 +95,8 @@ const MyProfile = () => {
     }
   };
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-salon-purple"></div>
-      </div>
-    );
-  }
-
-  if (!profile) {
+  // Show loading while auth is initializing or user/profile is loading
+  if (!isInitialized || isLoading || isProfileLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -87,6 +105,32 @@ const MyProfile = () => {
             <div className="max-w-2xl mx-auto text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-salon-purple mx-auto mb-4"></div>
               <p className="text-gray-600">Loading profile...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If no user after everything is loaded, redirect
+  if (!user) {
+    navigate('/');
+    return null;
+  }
+
+  // If no profile after loading, show error
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-16">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-2xl mx-auto text-center">
+              <p className="text-red-600">Error loading profile. Please try refreshing the page.</p>
+              <Button onClick={() => fetchProfile(user.id)} className="mt-4">
+                Retry Loading Profile
+              </Button>
             </div>
           </div>
         </main>

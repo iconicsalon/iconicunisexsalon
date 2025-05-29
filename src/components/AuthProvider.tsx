@@ -16,7 +16,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isInitialized,
     initializeAuth,
     clearState,
-    setLoading
+    setLoading,
+    profile,
+    user
   } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,6 +31,29 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [isInitialized, initializeAuth]);
 
+  // Handle onboarding redirect when profile is loaded
+  useEffect(() => {
+    if (user && profile !== null && isInitialized) {
+      console.log('Checking onboarding status:', { 
+        user: user.id, 
+        profile, 
+        onboarding_completed: profile?.onboarding_completed,
+        currentPath: location.pathname 
+      });
+      
+      // If profile exists but onboarding not completed, redirect to onboarding
+      if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
+        console.log('Redirecting to onboarding - not completed');
+        navigate('/onboarding');
+      }
+      // If onboarding is completed and user is on onboarding page, redirect to home
+      else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
+        console.log('Redirecting to home - onboarding already completed');
+        navigate('/');
+      }
+    }
+  }, [user, profile, isInitialized, location.pathname, navigate]);
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -40,7 +65,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           clearState();
           
           // Force navigation to home if on protected routes
-          if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/my-')) {
+          if (location.pathname.startsWith('/admin') || 
+              location.pathname.startsWith('/my-') || 
+              location.pathname === '/onboarding') {
             navigate('/');
           }
           return;
@@ -60,15 +87,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               try {
                 const profile = await fetchProfile(session.user.id);
                 console.log('Profile fetched successfully:', profile);
-                
-                // Handle onboarding redirect
-                if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
-                  console.log('Redirecting to onboarding');
-                  navigate('/onboarding');
-                } else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
-                  console.log('Redirecting to home from onboarding');
-                  navigate('/');
-                }
               } catch (error) {
                 console.error('Error fetching profile:', error);
               } finally {
