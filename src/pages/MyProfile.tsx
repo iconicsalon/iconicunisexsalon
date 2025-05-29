@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 const MyProfile = () => {
   const { user, profile, isLoading, updateProfile, fetchProfile, isInitialized } = useUserStore();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
@@ -34,25 +34,13 @@ const MyProfile = () => {
       return;
     }
 
-    // Fetch profile if user exists but profile is not loaded
-    const loadProfile = async () => {
-      if (user && !profile) {
-        console.log('Fetching profile for MyProfile page');
-        setIsProfileLoading(true);
-        try {
-          await fetchProfile(user.id);
-        } catch (error) {
-          console.error('Error fetching profile in MyProfile:', error);
-        } finally {
-          setIsProfileLoading(false);
-        }
-      } else if (profile) {
-        setIsProfileLoading(false);
-      }
-    };
-
-    loadProfile();
-  }, [user, profile, isInitialized, navigate, fetchProfile]);
+    // If user exists but hasn't completed onboarding, redirect to onboarding
+    if (user && profile && !profile.onboarding_completed) {
+      console.log('User needs to complete onboarding, redirecting...');
+      navigate('/onboarding');
+      return;
+    }
+  }, [user, profile, isInitialized, navigate]);
 
   useEffect(() => {
     // Update form data when profile is loaded
@@ -95,8 +83,31 @@ const MyProfile = () => {
     }
   };
 
+  const handleRetryProfile = async () => {
+    if (!user) return;
+
+    setIsRetrying(true);
+    try {
+      console.log('Retrying profile fetch for user:', user.id);
+      await fetchProfile(user.id);
+      toast({
+        title: 'Profile Loaded',
+        description: 'Your profile has been successfully loaded.',
+      });
+    } catch (error) {
+      console.error('Error retrying profile fetch:', error);
+      toast({
+        title: 'Retry Failed',
+        description: 'Could not load profile. Please check your connection and try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   // Show loading while auth is initializing or user/profile is loading
-  if (!isInitialized || isLoading || isProfileLoading) {
+  if (!isInitialized || isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -119,17 +130,28 @@ const MyProfile = () => {
     return null;
   }
 
-  // If no profile after loading, show error
-  if (!profile) {
+  // If no profile after loading, show error with retry option
+  if (profile === null) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto text-center">
-              <p className="text-red-600">Error loading profile. Please try refreshing the page.</p>
-              <Button onClick={() => fetchProfile(user.id)} className="mt-4">
-                Retry Loading Profile
+              <p className="text-red-600 mb-4">Error loading profile. Please try refreshing the page.</p>
+              <Button 
+                onClick={handleRetryProfile} 
+                disabled={isRetrying}
+                className="bg-gradient-salon hover:opacity-90"
+              >
+                {isRetrying ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Retrying...
+                  </>
+                ) : (
+                  'Retry Loading Profile'
+                )}
               </Button>
             </div>
           </div>

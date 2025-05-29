@@ -33,7 +33,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Handle onboarding redirect when profile is loaded
   useEffect(() => {
-    if (user && profile !== null && isInitialized) {
+    if (user && isInitialized) {
       console.log('Checking onboarding status:', { 
         user: user.id, 
         profile, 
@@ -41,15 +41,25 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         currentPath: location.pathname 
       });
       
+      // If user exists but profile is null, they need to complete onboarding
+      if (profile === null && location.pathname !== '/onboarding') {
+        console.log('Profile is null - redirecting to onboarding');
+        navigate('/onboarding');
+        return;
+      }
+      
       // If profile exists but onboarding not completed, redirect to onboarding
       if (profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
         console.log('Redirecting to onboarding - not completed');
         navigate('/onboarding');
+        return;
       }
+      
       // If onboarding is completed and user is on onboarding page, redirect to home
-      else if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
+      if (profile && profile.onboarding_completed && location.pathname === '/onboarding') {
         console.log('Redirecting to home - onboarding already completed');
         navigate('/');
+        return;
       }
     }
   }, [user, profile, isInitialized, location.pathname, navigate]);
@@ -82,17 +92,23 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log('Fetching profile for user:', session.user.id);
             setLoading(true);
             
-            // Use setTimeout to avoid potential callback issues
-            setTimeout(async () => {
-              try {
-                const profile = await fetchProfile(session.user.id);
-                console.log('Profile fetched successfully:', profile);
-              } catch (error) {
-                console.error('Error fetching profile:', error);
-              } finally {
-                setLoading(false);
+            try {
+              const profile = await fetchProfile(session.user.id);
+              console.log('Profile fetched successfully:', profile);
+              
+              // After profile is fetched, check if user needs onboarding
+              if (!profile || !profile.onboarding_completed) {
+                console.log('User needs onboarding, redirecting...');
+                navigate('/onboarding');
               }
-            }, 0);
+            } catch (error) {
+              console.error('Error fetching profile:', error);
+              // If profile fetch fails for a signed-in user, they likely need onboarding
+              console.log('Profile fetch failed, redirecting to onboarding');
+              navigate('/onboarding');
+            } finally {
+              setLoading(false);
+            }
           }
         }
       }

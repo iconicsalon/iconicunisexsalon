@@ -119,11 +119,13 @@ export const useUserStore = create<UserState>((set, get) => ({
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
-        throw error;
+        // Don't throw error, just return null for missing profiles
+        set({ profile: null });
+        return null;
       }
       
       console.log('Profile data received:', data);
@@ -205,9 +207,12 @@ export const useUserStore = create<UserState>((set, get) => ({
         
         // Fetch user profile
         try {
-          await get().fetchProfile(session.user.id);
+          const profile = await get().fetchProfile(session.user.id);
+          console.log('Profile fetch result during init:', profile);
         } catch (profileError) {
           console.error('Error fetching profile during init:', profileError);
+          // Set profile to null if fetch fails
+          set({ profile: null });
         }
       } else {
         console.log('No active session found');
