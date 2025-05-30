@@ -22,11 +22,7 @@ export const signOut = async (clearState: () => void) => {
   try {
     console.log('Starting logout process...');
     
-    // Clear state first to prevent UI issues
-    clearState();
-    console.log('State cleared successfully');
-    
-    // Sign out from Supabase
+    // Sign out from Supabase first
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error during Supabase sign out:', error);
@@ -35,6 +31,14 @@ export const signOut = async (clearState: () => void) => {
     
     console.log('Supabase logout successful');
     
+    // Clear state after successful signout
+    clearState();
+    console.log('State cleared successfully');
+    
+    // Clear any remaining auth data
+    localStorage.removeItem('supabase.auth.token');
+    sessionStorage.clear();
+    
     // Force redirect to home page
     window.location.href = '/';
     
@@ -42,6 +46,8 @@ export const signOut = async (clearState: () => void) => {
     console.error('Error signing out:', error);
     // Even if signout fails, clear state to prevent stuck state
     clearState();
+    localStorage.removeItem('supabase.auth.token');
+    sessionStorage.clear();
     throw error;
   }
 };
@@ -50,17 +56,17 @@ export const updateProfile = async (updates: Partial<Profile>, userId: string, u
   try {
     console.log('Updating profile with:', updates);
     console.log('User ID:', userId);
+    console.log('User Email:', userEmail);
     
-    // Prepare the profile data
+    // Prepare the profile data with proper defaults
     const profileData = {
       id: userId,
-      email_id: userEmail || '',
+      email_id: userEmail,
       full_name: updates.full_name || '',
       phone_number: updates.phone_number || null,
       instagram_id: updates.instagram_id || null,
       onboarding_completed: updates.onboarding_completed !== undefined ? updates.onboarding_completed : false,
       is_admin: false,
-      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
@@ -78,6 +84,7 @@ export const updateProfile = async (updates: Partial<Profile>, userId: string, u
 
     if (error) {
       console.error('Error upserting profile:', error);
+      console.error('Error details:', error.message, error.details, error.hint);
       throw error;
     }
     

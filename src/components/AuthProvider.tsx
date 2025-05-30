@@ -99,13 +99,17 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // After profile is fetched, check if user needs onboarding
               if (!profile || !profile.onboarding_completed) {
                 console.log('User needs onboarding, redirecting...');
-                navigate('/onboarding');
+                if (location.pathname !== '/onboarding') {
+                  navigate('/onboarding');
+                }
               }
             } catch (error) {
               console.error('Error fetching profile:', error);
               // If profile fetch fails for a signed-in user, they likely need onboarding
               console.log('Profile fetch failed, redirecting to onboarding');
-              navigate('/onboarding');
+              if (location.pathname !== '/onboarding') {
+                navigate('/onboarding');
+              }
             } finally {
               setLoading(false);
             }

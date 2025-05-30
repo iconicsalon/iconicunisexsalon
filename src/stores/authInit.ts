@@ -37,14 +37,22 @@ export const initializeAuth = async (callbacks: AuthInitCallbacks) => {
       setSession(session);
       setUser(session.user);
       
-      // Fetch user profile
+      // Fetch user profile with better error handling
       try {
+        console.log('Attempting to fetch profile for user:', session.user.id);
         const profile = await fetchProfile(session.user.id);
         console.log('Profile fetch result during init:', profile);
-        setProfile(profile);
+        
+        if (profile) {
+          setProfile(profile);
+          console.log('Profile set successfully:', profile.full_name);
+        } else {
+          console.log('No profile found, user may need onboarding');
+          setProfile(null);
+        }
       } catch (profileError) {
         console.error('Error fetching profile during init:', profileError);
-        // Set profile to null if fetch fails
+        // Set profile to null if fetch fails - user may need onboarding
         setProfile(null);
       }
     } else {
