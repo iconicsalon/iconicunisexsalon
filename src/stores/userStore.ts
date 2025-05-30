@@ -90,22 +90,41 @@ export const useUserStore = create<UserState>((set, get) => ({
   signOut: async () => {
     try {
       console.log('Starting logout process...');
+      console.log('Current user before logout:', get().user?.id);
+      console.log('Current session before logout:', get().session?.access_token ? 'exists' : 'none');
       
-      // Sign out from Supabase first
+      // Clear state first to prevent UI issues
+      set({
+        user: null,
+        session: null,
+        profile: null,
+        bookings: [],
+        isLoading: false,
+      });
+      console.log('State cleared successfully');
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error during Supabase sign out:', error);
         throw error;
       }
       
-      // Clear state after successful signout
-      get().clearState();
+      console.log('Supabase logout successful');
       
-      console.log('Logout successful');
+      // Force redirect to home page
+      window.location.href = '/';
+      
     } catch (error) {
       console.error('Error signing out:', error);
-      // Clear state even if signout fails to prevent stuck state
-      get().clearState();
+      // Even if signout fails, clear state to prevent stuck state
+      set({
+        user: null,
+        session: null,
+        profile: null,
+        bookings: [],
+        isLoading: false,
+      });
       throw error;
     }
   },

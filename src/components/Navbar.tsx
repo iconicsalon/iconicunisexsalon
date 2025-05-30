@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { user, profile, signInWithGoogle, signOut, isLoading } = useUserStore();
   const { toast } = useToast();
 
@@ -40,18 +40,27 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent double clicks
+    
     try {
+      setIsLoggingOut(true);
+      console.log('Logout button clicked');
+      
       await signOut();
+      
       toast({
         title: 'Signed Out',
         description: 'You have been successfully signed out.',
       });
     } catch (error) {
+      console.error('Logout error in navbar:', error);
       toast({
         title: 'Error',
         description: 'There was an error signing out. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -136,9 +145,9 @@ const Navbar = () => {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                    {isLoggingOut ? 'Signing out...' : 'Logout'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -214,11 +223,12 @@ const Navbar = () => {
                       )}
                       <Button 
                         onClick={handleLogout}
+                        disabled={isLoggingOut}
                         variant="outline" 
                         className="w-full flex items-center gap-2"
                       >
                         <LogOut className="h-4 w-4" />
-                        Logout
+                        {isLoggingOut ? 'Signing out...' : 'Logout'}
                       </Button>
                     </div>
                   )}
