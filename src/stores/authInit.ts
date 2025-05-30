@@ -1,7 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProfile } from './dataOperations';
-import type { User, Session, Profile } from './types';
+import type { User, Session } from '@supabase/supabase-js';
+import type { Profile } from './types';
 
 interface AuthInitCallbacks {
   setSession: (session: Session | null) => void;
