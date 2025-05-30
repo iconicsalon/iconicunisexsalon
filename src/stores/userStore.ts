@@ -176,62 +176,47 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   updateProfile: async (updates: Partial<Profile>) => {
     const { user } = get();
-    if (!user) throw new Error('No user logged in');
+    if (!user) {
+      console.error('No user logged in');
+      throw new Error('No user logged in');
+    }
 
     try {
       console.log('Updating profile with:', updates);
+      console.log('User ID:', user.id);
       
-      // Check if profile exists first
-      const { data: existingProfile } = await supabase
+      // Prepare the profile data
+      const profileData = {
+        id: user.id,
+        email_id: user.email || '',
+        full_name: updates.full_name || '',
+        phone_number: updates.phone_number || null,
+        instagram_id: updates.instagram_id || null,
+        onboarding_completed: updates.onboarding_completed !== undefined ? updates.onboarding_completed : false,
+        is_admin: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Profile data to upsert:', profileData);
+
+      // Use upsert to handle both insert and update cases
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
+        .upsert(profileData, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
 
-      let result;
-      
-      if (existingProfile) {
-        // Update existing profile
-        console.log('Updating existing profile');
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id)
-          .select()
-          .single();
-
-        if (error) throw error;
-        result = data;
-      } else {
-        // Create new profile
-        console.log('Creating new profile');
-        const profileData = {
-          id: user.id,
-          email_id: user.email || '',
-          full_name: updates.full_name || '',
-          phone_number: updates.phone_number || null,
-          instagram_id: updates.instagram_id || null,
-          onboarding_completed: updates.onboarding_completed || false,
-          is_admin: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert(profileData)
-          .select()
-          .single();
-
-        if (error) throw error;
-        result = data;
+      if (error) {
+        console.error('Error upserting profile:', error);
+        throw error;
       }
       
-      console.log('Profile operation successful:', result);
-      set({ profile: result });
+      console.log('Profile upsert successful:', data);
+      set({ profile: data });
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
