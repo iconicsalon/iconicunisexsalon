@@ -34,12 +34,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Handle onboarding redirect when profile is loaded
   useEffect(() => {
     if (user && isInitialized) {
-      console.log('Checking onboarding status:', { 
-        user: user.id, 
-        profile, 
-        onboarding_completed: profile?.onboarding_completed,
-        currentPath: location.pathname 
-      });
+      console.log('=== AUTH PROVIDER REDIRECT CHECK ===');
+      console.log('User:', user.id);
+      console.log('Profile:', profile);
+      console.log('Onboarding completed:', profile?.onboarding_completed);
+      console.log('Current path:', location.pathname);
       
       // If user exists but profile is null, they need to complete onboarding
       if (profile === null && location.pathname !== '/onboarding') {
@@ -68,7 +67,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id || 'no user');
+        console.log('=== AUTH STATE CHANGE ===');
+        console.log('Event:', event);
+        console.log('Session user ID:', session?.user?.id || 'no user');
         
         if (event === 'SIGNED_OUT' || !session) {
           console.log('User signed out or session ended - clearing state');
@@ -94,13 +95,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             try {
               const profile = await fetchProfile(session.user.id);
-              console.log('Profile fetched successfully:', profile);
+              console.log('Profile fetched in auth state change:', profile);
               
               // After profile is fetched, check if user needs onboarding
               if (!profile || !profile.onboarding_completed) {
                 console.log('User needs onboarding, redirecting...');
                 if (location.pathname !== '/onboarding') {
                   navigate('/onboarding');
+                }
+              } else {
+                console.log('User has completed onboarding');
+                // If user is on onboarding page but has completed it, redirect to home
+                if (location.pathname === '/onboarding') {
+                  navigate('/');
                 }
               }
             } catch (error) {

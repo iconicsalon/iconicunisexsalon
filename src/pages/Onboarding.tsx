@@ -35,10 +35,33 @@ const Onboarding = () => {
   });
 
   const onSubmit = async (data: OnboardingFormData) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'No user found. Please try logging in again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!user.email) {
+      toast({
+        title: 'Error',
+        description: 'User email is missing. Please try logging in again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
+    
     try {
+      console.log('=== ONBOARDING FORM SUBMISSION ===');
+      console.log('Form data:', data);
+      console.log('User:', user);
+      console.log('User ID:', user.id);
+      console.log('User Email:', user.email);
+
       await updateProfile({
         full_name: data.full_name,
         phone_number: data.phone_number,
@@ -46,17 +69,25 @@ const Onboarding = () => {
         onboarding_completed: true,
       });
 
+      console.log('Profile update successful, showing success toast');
+      
       toast({
         title: 'Welcome to Iconic Unisex Salon!',
         description: 'Your profile has been set up successfully.',
       });
 
+      console.log('Redirecting to home page');
       navigate('/');
-    } catch (error) {
+      
+    } catch (error: any) {
+      console.error('=== ONBOARDING ERROR ===');
       console.error('Error completing onboarding:', error);
+      
+      const errorMessage = error?.message || 'Failed to complete onboarding. Please try again.';
+      
       toast({
         title: 'Error',
-        description: 'Failed to complete onboarding. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -65,6 +96,7 @@ const Onboarding = () => {
   };
 
   if (!user) {
+    console.log('No user found, redirecting to home');
     navigate('/');
     return null;
   }
