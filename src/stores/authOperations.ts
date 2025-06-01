@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Profile } from './types';
 
@@ -22,7 +21,10 @@ export const signOut = async (clearState: () => void) => {
   try {
     console.log('Starting logout process...');
     
-    // Sign out from Supabase first
+    // Clear state first to prevent UI glitches
+    clearState();
+    
+    // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error during Supabase sign out:', error);
@@ -31,20 +33,15 @@ export const signOut = async (clearState: () => void) => {
     
     console.log('Supabase logout successful');
     
-    // Clear state after successful signout
-    clearState();
-    console.log('State cleared successfully');
-    
-    // Clear any remaining auth data
+    // Clear any remaining auth data without forcing page reload
     localStorage.removeItem('supabase.auth.token');
     sessionStorage.clear();
     
-    // Force redirect to home page
-    window.location.href = '/';
+    console.log('Logout completed successfully');
     
   } catch (error) {
     console.error('Error signing out:', error);
-    // Even if signout fails, clear state to prevent stuck state
+    // Even if signout fails, ensure state is cleared
     clearState();
     localStorage.removeItem('supabase.auth.token');
     sessionStorage.clear();

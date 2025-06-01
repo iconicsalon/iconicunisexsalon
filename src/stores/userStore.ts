@@ -14,32 +14,58 @@ export const useUserStore = create<UserState>((set, get) => ({
   isInitialized: false,
 
   setUser: (user) => {
-    console.log('Setting user:', user?.id || 'null');
-    set({ user });
+    const currentUser = get().user;
+    if (currentUser?.id !== user?.id) {
+      console.log('Setting user:', user?.id || 'null');
+      set({ user });
+    }
   },
+  
   setSession: (session) => {
-    console.log('Setting session:', session?.user?.id || 'null');
-    set({ session });
+    const currentSession = get().session;
+    if (currentSession?.access_token !== session?.access_token) {
+      console.log('Setting session:', session?.user?.id || 'null');
+      set({ session });
+    }
   },
+  
   setProfile: (profile) => {
-    console.log('Setting profile:', profile?.full_name || 'null');
-    set({ profile });
+    const currentProfile = get().profile;
+    if (currentProfile?.id !== profile?.id || currentProfile?.onboarding_completed !== profile?.onboarding_completed) {
+      console.log('Setting profile:', profile?.full_name || 'null');
+      set({ profile });
+    }
   },
+  
   setBookings: (bookings) => set({ bookings }),
   setLoading: (isLoading) => set({ isLoading }),
   setInitialized: (isInitialized) => set({ isInitialized }),
 
   signInWithGoogle: () => authSignInWithGoogle(),
 
-  signOut: () => authSignOut(() => {
-    set({
-      user: null,
-      session: null,
-      profile: null,
-      bookings: [],
-      isLoading: false,
-    });
-  }),
+  signOut: async () => {
+    try {
+      await authSignOut(() => {
+        set({
+          user: null,
+          session: null,
+          profile: null,
+          bookings: [],
+          isLoading: false,
+        });
+      });
+    } catch (error) {
+      console.error('Error in signOut:', error);
+      // Force clear state even if signout fails
+      set({
+        user: null,
+        session: null,
+        profile: null,
+        bookings: [],
+        isLoading: false,
+      });
+    }
+  },
 
   fetchProfile: async (userId: string) => {
     const profile = await dataFetchProfile(userId);

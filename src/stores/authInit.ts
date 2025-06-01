@@ -12,10 +12,19 @@ interface AuthInitCallbacks {
   setInitialized: (initialized: boolean) => void;
 }
 
+let isInitializing = false;
+
 export const initializeAuth = async (callbacks: AuthInitCallbacks) => {
+  // Prevent multiple simultaneous initializations
+  if (isInitializing) {
+    console.log('Auth initialization already in progress...');
+    return;
+  }
+
   const { setSession, setUser, setProfile, setLoading, setInitialized } = callbacks;
   
   try {
+    isInitializing = true;
     console.log('Initializing auth state...');
     setLoading(true);
     
@@ -27,8 +36,6 @@ export const initializeAuth = async (callbacks: AuthInitCallbacks) => {
       setUser(null);
       setSession(null);
       setProfile(null);
-      setLoading(false);
-      setInitialized(true);
       return;
     }
 
@@ -37,22 +44,15 @@ export const initializeAuth = async (callbacks: AuthInitCallbacks) => {
       setSession(session);
       setUser(session.user);
       
-      // Fetch user profile with better error handling
+      // Fetch user profile
       try {
-        console.log('Attempting to fetch profile for user:', session.user.id);
+        console.log('Fetching profile for user:', session.user.id);
         const profile = await fetchProfile(session.user.id);
-        console.log('Profile fetch result during init:', profile);
-        
-        if (profile) {
-          setProfile(profile);
-          console.log('Profile set successfully:', profile.full_name);
-        } else {
-          console.log('No profile found, user may need onboarding');
-          setProfile(null);
-        }
+        console.log('Profile fetch result:', profile ? 'found' : 'not found');
+        setProfile(profile);
       } catch (profileError) {
         console.error('Error fetching profile during init:', profileError);
-        // Set profile to null if fetch fails - user may need onboarding
+        // Set profile to null if fetch fails
         setProfile(null);
       }
     } else {
@@ -69,5 +69,7 @@ export const initializeAuth = async (callbacks: AuthInitCallbacks) => {
   } finally {
     setLoading(false);
     setInitialized(true);
+    isInitializing = false;
+    console.log('Auth initialization completed');
   }
 };
