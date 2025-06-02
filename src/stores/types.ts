@@ -7,6 +7,7 @@ export interface Profile {
   email_id: string;
   phone_number: string | null;
   instagram_id: string | null;
+  gender: 'male' | 'female' | null;
   onboarding_completed: boolean;
   is_admin: boolean;
   created_at: string;

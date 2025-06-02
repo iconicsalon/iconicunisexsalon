@@ -15,6 +15,10 @@ const onboardingSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters'),
   phone_number: z.string().regex(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
   instagram_id: z.string().optional(),
+  gender: z.enum(['male', 'female'], {
+    required_error: 'Please select your gender',
+    invalid_type_error: 'Gender must be either male or female'
+  }),
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
@@ -31,6 +35,7 @@ const Onboarding = () => {
       full_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
       phone_number: '',
       instagram_id: '',
+      gender: undefined,
     },
   });
 
@@ -66,6 +71,7 @@ const Onboarding = () => {
         full_name: data.full_name,
         phone_number: data.phone_number,
         instagram_id: data.instagram_id || null,
+        gender: data.gender,
         onboarding_completed: true,
       });
 
@@ -83,7 +89,10 @@ const Onboarding = () => {
       console.error('=== ONBOARDING ERROR ===');
       console.error('Error completing onboarding:', error);
       
-      const errorMessage = error?.message || 'Failed to complete onboarding. Please try again.';
+      // Check if error is related to gender field specifically
+      const errorMessage = error?.message?.includes('gender') 
+        ? '❌ Failed to save gender selection. Please try again.'
+        : error?.message || 'Failed to complete onboarding. Please try again.';
       
       toast({
         title: 'Error',
@@ -155,6 +164,43 @@ const Onboarding = () => {
                     <FormLabel>Instagram ID (Optional)</FormLabel>
                     <FormControl>
                       <Input placeholder="@your_instagram" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender *</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange('male')}
+                          className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+                            field.value === 'male'
+                              ? 'bg-black text-white border-black'
+                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                          }`}
+                        >
+                          👨 Male
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange('female')}
+                          className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+                            field.value === 'female'
+                              ? 'bg-black text-white border-black'
+                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                          }`}
+                        >
+                          👩 Female
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Profile } from './types';
 
@@ -71,6 +72,7 @@ export const updateProfile = async (updates: Partial<Profile>, userId: string, u
       full_name: updates.full_name?.trim() || '',
       phone_number: updates.phone_number?.trim() || null,
       instagram_id: updates.instagram_id?.trim() || null,
+      gender: updates.gender || null,
       onboarding_completed: updates.onboarding_completed !== undefined ? updates.onboarding_completed : false,
       is_admin: false,
       updated_at: new Date().toISOString()
