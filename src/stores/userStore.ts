@@ -87,7 +87,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
 
     const updatedProfile = await authUpdateProfile(updates, user.id, user.email || '');
-    set({ profile: updatedProfile });
+    // Type assertion to ensure the returned profile matches our interface
+    const typedProfile = {
+      ...updatedProfile,
+      gender: updatedProfile.gender as 'male' | 'female' | null
+    };
+    set({ profile: typedProfile });
   },
 
   initializeAuth: () => authInitialize({

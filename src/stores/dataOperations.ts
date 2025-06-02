@@ -17,8 +17,19 @@ export const fetchProfile = async (userId: string): Promise<Profile | null> => {
       return null;
     }
     
-    console.log('Profile data received:', data);
-    return data;
+    if (!data) {
+      console.log('No profile data found');
+      return null;
+    }
+    
+    // Type assertion to ensure gender field matches our Profile interface
+    const profile: Profile = {
+      ...data,
+      gender: data.gender as 'male' | 'female' | null
+    };
+    
+    console.log('Profile data received:', profile);
+    return profile;
   } catch (error) {
     console.error('Error in fetchProfile:', error);
     return null;
