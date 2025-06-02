@@ -42,7 +42,7 @@ export interface UserState {
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
   fetchBookings: (userId: string) => Promise<Booking[]>;
-  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateProfile: (updates: Partial<Profile>, skipOnboardingUpdate?: boolean) => Promise<void>;
   initializeAuth: () => Promise<void>;
   clearState: () => void;
 }

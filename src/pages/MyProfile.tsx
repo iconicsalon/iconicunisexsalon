@@ -19,6 +19,7 @@ const MyProfile = () => {
     full_name: '',
     phone_number: '',
     instagram_id: '',
+    gender: null as 'male' | 'female' | null,
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,6 +51,7 @@ const MyProfile = () => {
         full_name: profile.full_name || '',
         phone_number: profile.phone_number || '',
         instagram_id: profile.instagram_id || '',
+        gender: profile.gender || null,
       });
     }
   }, [profile]);
@@ -61,12 +63,20 @@ const MyProfile = () => {
     }));
   };
 
+  const handleGenderChange = (gender: 'male' | 'female') => {
+    setFormData(prev => ({
+      ...prev,
+      gender
+    }));
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
     setIsUpdating(true);
     try {
-      await updateProfile(formData);
+      // Use skipOnboardingUpdate flag to prevent onboarding redirect
+      await updateProfile(formData, true);
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
@@ -231,6 +241,34 @@ const MyProfile = () => {
                     onChange={(e) => handleInputChange('instagram_id', e.target.value)}
                     placeholder="@your_instagram_handle"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Gender</Label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleGenderChange('male')}
+                      className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+                        formData.gender === 'male'
+                          ? 'bg-black text-white border-black'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      }`}
+                    >
+                      👨 Male
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleGenderChange('female')}
+                      className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+                        formData.gender === 'female'
+                          ? 'bg-black text-white border-black'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      }`}
+                    >
+                      👩 Female
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-4">

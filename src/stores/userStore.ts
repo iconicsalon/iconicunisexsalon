@@ -79,14 +79,19 @@ export const useUserStore = create<UserState>((set, get) => ({
     return bookings;
   },
 
-  updateProfile: async (updates) => {
+  updateProfile: async (updates, skipOnboardingUpdate = false) => {
     const { user } = get();
     if (!user) {
       console.error('No user logged in');
       throw new Error('No user logged in');
     }
 
-    const updatedProfile = await authUpdateProfile(updates, user.id, user.email || '');
+    // If updating from My Profile page, ensure onboarding_completed stays true
+    const profileUpdates = skipOnboardingUpdate 
+      ? { ...updates, onboarding_completed: true }
+      : updates;
+
+    const updatedProfile = await authUpdateProfile(profileUpdates, user.id, user.email || '');
     // Type assertion to ensure the returned profile matches our interface
     const typedProfile = {
       ...updatedProfile,
