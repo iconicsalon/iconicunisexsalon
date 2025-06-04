@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import BookAppointmentDialog from './BookAppointmentDialog';
+import SimpleBookingDialog from './SimpleBookingDialog';
 
 interface Offer {
   id: string;
@@ -83,7 +82,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer }) => {
           </div>
 
           {/* Book Now Button */}
-          <BookAppointmentDialog
+          <SimpleBookingDialog
             trigger={
               <Button className="w-full bg-gradient-salon hover:opacity-90 text-white font-semibold py-3">
                 Book Now

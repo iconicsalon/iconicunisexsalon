@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, MapPin } from 'lucide-react';
-import BookAppointmentDialog from './BookAppointmentDialog';
+import SimpleBookingDialog from './SimpleBookingDialog';
 
 const Hero = () => {
   const handleBookingSuccess = () => {
@@ -43,7 +42,7 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <BookAppointmentDialog
+            <SimpleBookingDialog
               trigger={
                 <Button 
                   size="lg" 

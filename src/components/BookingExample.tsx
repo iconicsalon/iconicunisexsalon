@@ -1,6 +1,6 @@
 
 import React from 'react';
-import BookAppointmentDialog from './BookAppointmentDialog';
+import SimpleBookingDialog from './SimpleBookingDialog';
 import { Button } from '@/components/ui/button';
 
 const BookingExample = () => {
@@ -19,7 +19,7 @@ const BookingExample = () => {
           Book your appointment with our professional stylists
         </p>
         
-        <BookAppointmentDialog 
+        <SimpleBookingDialog 
           trigger={
             <Button size="lg" className="bg-salon-purple hover:bg-salon-purple/90">
               Book Appointment
