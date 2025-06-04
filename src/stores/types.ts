@@ -19,6 +19,7 @@ export interface Booking {
   user_id: string;
   booking_date: string;
   services: string[];
+  category_list: string[];
   status: string;
   total_amount: number | null;
   created_at: string;

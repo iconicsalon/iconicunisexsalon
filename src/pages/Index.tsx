@@ -5,7 +5,7 @@ import PremiumServices from '@/components/PremiumServices';
 import TestimonialCarousel from '@/components/TestimonialCarousel';
 import GoogleReviews from '@/components/GoogleReviews';
 import Footer from '@/components/Footer';
-import BookAppointmentDialog from '@/components/BookAppointmentDialog';
+import MultiStepBookingDialog from '@/components/MultiStepBookingDialog';
 import AdminTest from '@/components/AdminTest';
 import { Button } from '@/components/ui/button';
 import { useUserStore } from '@/stores/userStore';
@@ -30,7 +30,7 @@ const Index = () => {
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 animate-fade-in">
               Experience premium beauty and grooming services in the heart of Bengaluru
             </p>
-            <BookAppointmentDialog
+            <MultiStepBookingDialog
               trigger={
                 <Button className="bg-white text-salon-purple px-8 py-4 rounded-full font-semibold text-lg hover:scale-105 transition-transform shadow-lg animate-scale-in">
                   Book Appointment

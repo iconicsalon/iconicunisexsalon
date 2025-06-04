@@ -7,9 +7,9 @@ import { useUserStore } from '@/stores/userStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, Plus } from 'lucide-react';
+import { Calendar, Plus } from 'lucide-react';
 import { format } from 'date-fns';
-import BookAppointmentDialog from '@/components/BookAppointmentDialog';
+import MultiStepBookingDialog from '@/components/MultiStepBookingDialog';
 
 const MyBookings = () => {
   const { user, profile, bookings, isLoading, fetchBookings } = useUserStore();
@@ -64,7 +64,7 @@ const MyBookings = () => {
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold gradient-text">My Bookings</h1>
-              <BookAppointmentDialog 
+              <MultiStepBookingDialog 
                 trigger={
                   <Button className="bg-gradient-salon hover:opacity-90 transition-opacity">
                     <Plus className="h-4 w-4 mr-2" />
@@ -87,7 +87,7 @@ const MyBookings = () => {
                   <p className="text-gray-600 mb-6">
                     You haven't booked any appointments yet. Start your beauty journey with us!
                   </p>
-                  <BookAppointmentDialog 
+                  <MultiStepBookingDialog 
                     trigger={
                       <Button className="bg-gradient-salon hover:opacity-90 transition-opacity">
                         <Plus className="h-4 w-4 mr-2" />
@@ -120,6 +120,19 @@ const MyBookings = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
+                        {booking.category_list && booking.category_list.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Categories:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {booking.category_list.map((category, index) => (
+                                <Badge key={index} variant="outline" className="bg-salon-purple/10 text-salon-purple">
+                                  {category}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
                         <div>
                           <h4 className="font-medium mb-2">Services:</h4>
                           <div className="flex flex-wrap gap-2">
