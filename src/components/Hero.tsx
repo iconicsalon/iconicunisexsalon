@@ -1,11 +1,30 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, MapPin } from 'lucide-react';
 import SimpleBookingDialog from './SimpleBookingDialog';
+import GoogleSignInButton from './GoogleSignInButton';
+import { useUserStore } from '@/stores/userStore';
+import { useToast } from '@/hooks/use-toast';
 
 const Hero = () => {
+  const { user, signInWithGoogle, isLoading } = useUserStore();
+  const { toast } = useToast();
+
   const handleBookingSuccess = () => {
     console.log('Booking was successful! Refresh booking lists here.');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      toast({
+        title: 'Sign In Failed',
+        description: 'There was an error signing in with Google. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -54,6 +73,16 @@ const Hero = () => {
               }
               onBookingSuccess={handleBookingSuccess}
             />
+            
+            {!user && (
+              <GoogleSignInButton 
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                showFullText={false}
+                className="px-8 py-6 text-lg font-semibold rounded-xl shadow-2xl h-auto min-h-[3.5rem]"
+              />
+            )}
+            
             <Button 
               variant="outline" 
               size="lg"
