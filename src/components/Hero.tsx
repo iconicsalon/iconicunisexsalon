@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SimpleBookingDialog from './SimpleBookingDialog';
-import GoogleSignInButton from './GoogleSignInButton';
 import { useUserStore } from '@/stores/userStore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,7 +60,7 @@ const Hero = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <SimpleBookingDialog
               trigger={
                 <Button 
@@ -75,6 +74,7 @@ const Hero = () => {
               onBookingSuccess={handleBookingSuccess}
             />
             
+            {/* Google Sign In Button or Show Offers Button */}
             {!user ? (
               <button 
                 className="gsi-material-button"
@@ -106,7 +106,10 @@ const Hero = () => {
                 </Button>
               </Link>
             )}
-            
+          </div>
+
+          {/* View Services Button */}
+          <div className="mb-8">
             <Button 
               variant="outline" 
               size="lg"
