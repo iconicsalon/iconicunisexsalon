@@ -26,12 +26,15 @@ const bookingSchema = z.object({
 export type BookingFormData = z.infer<typeof bookingSchema>;
 
 export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
+  // All useState hooks first
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState<BookingFormData | null>(null);
+  
+  // Then all other hooks
   const { toast } = useToast();
   const { profile } = useUserStore();
 
@@ -50,6 +53,37 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
 
   const watchedCategories = form.watch('categories');
   const watchedGender = form.watch('gender');
+
+  const nextStep = async () => {
+    console.log('nextStep called, current step:', currentStep);
+    let isValid = false;
+    
+    if (currentStep === 1) {
+      console.log('Validating step 1 fields');
+      isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
+      console.log('Step 1 validation result:', isValid);
+      console.log('Form errors:', form.formState.errors);
+    } else if (currentStep === 2) {
+      console.log('Validating step 2 fields'); 
+      isValid = await form.trigger(['categories']);
+      console.log('Step 2 validation result:', isValid);
+    } else if (currentStep === 3) {
+      console.log('Validating step 3 fields');
+      isValid = await form.trigger(['services']);
+      console.log('Step 3 validation result:', isValid);
+    }
+    
+    if (isValid) {
+      console.log('Validation passed, moving to next step');
+      setCurrentStep(prev => prev + 1);
+    } else {
+      console.log('Validation failed, staying on current step');
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+  };
 
   const resetBooking = () => {
     setCurrentStep(1);
@@ -99,26 +133,6 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
         variant: "destructive",
       });
     }
-  };
-
-  const nextStep = async () => {
-    let isValid = false;
-    
-    if (currentStep === 1) {
-      isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
-    } else if (currentStep === 2) {
-      isValid = await form.trigger(['categories']);
-    } else if (currentStep === 3) {
-      isValid = await form.trigger(['services']);
-    }
-    
-    if (isValid) {
-      setCurrentStep(prev => prev + 1);
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
   };
 
   const onSubmit = async (data: BookingFormData) => {
@@ -232,6 +246,7 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
   // Initialize form with profile data when profile is available
   useEffect(() => {
     if (profile) {
+      console.log('Initializing form with profile data:', profile);
       form.reset({
         full_name: profile.full_name || '',
         email_id: profile.email_id || '',

@@ -37,6 +37,12 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
     exit: { opacity: 0, x: -20 }
   };
 
+  const handleNext = async () => {
+    console.log('ContactStep handleNext called');
+    console.log('Current form values:', form.getValues());
+    await onNext();
+  };
+
   return (
     <motion.div
       variants={stepVariants}
@@ -59,8 +65,8 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.full_name || ''}
-                    disabled 
-                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
                     placeholder="Your Name"
                   />
                 </FormControl>
@@ -78,9 +84,9 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.email_id || ''}
+                    onChange={(e) => field.onChange(e.target.value)}
                     type="email" 
-                    disabled 
-                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
                     placeholder="your.email@example.com"
                   />
                 </FormControl>
@@ -98,8 +104,8 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.phone_number || ''}
-                    disabled 
-                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
                     placeholder="+91 98765 43210"
                   />
                 </FormControl>
@@ -200,7 +206,7 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
       <div className="pt-4">
         <Button 
           type="button" 
-          onClick={onNext}
+          onClick={handleNext}
           className="w-full bg-pink-500 hover:bg-pink-600 text-white h-12 rounded-lg font-medium"
         >
           Next
