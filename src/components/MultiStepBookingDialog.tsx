@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -114,20 +115,24 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   }, [open]);
 
   useEffect(() => {
-    // Reset services when categories change
+    // Reset services when categories change, but prevent infinite loops
     if (watchedCategories.length === 0) {
-      form.setValue('services', []);
+      const currentServices = form.getValues('services');
+      if (currentServices.length > 0) {
+        form.setValue('services', [], { shouldValidate: false });
+      }
     } else {
       // Remove services that don't belong to selected categories
-      const validServices = watchedServices.filter(serviceName => {
+      const currentServices = form.getValues('services');
+      const validServices = currentServices.filter(serviceName => {
         const service = services.find(s => s.name === serviceName);
         return service && service.category && watchedCategories.includes(service.category.name);
       });
-      if (validServices.length !== watchedServices.length) {
-        form.setValue('services', validServices);
+      if (validServices.length !== currentServices.length) {
+        form.setValue('services', validServices, { shouldValidate: false });
       }
     }
-  }, [watchedCategories, services, watchedServices, form]);
+  }, [watchedCategories, services, form]);
 
   const fetchUserProfile = async () => {
     try {
@@ -180,6 +185,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
 
   const fetchServices = async () => {
     try {
+      console.log('Fetching services...');
       const { data, error } = await supabase
         .from('services')
         .select(`
@@ -199,6 +205,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         return;
       }
 
+      console.log('Services fetched successfully:', data);
       setServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -300,10 +307,6 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       setLoading(false);
     }
   };
-
-  const filteredServices = services.filter(service => 
-    service.category && watchedCategories.includes(service.category.name)
-  );
 
   const groupedServices = watchedCategories.map(category => ({
     category,
