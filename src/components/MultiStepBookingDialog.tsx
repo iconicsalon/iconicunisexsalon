@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,9 @@ const bookingSchema = z.object({
   booking_date: z.date({
     required_error: 'Booking date is required',
   }),
+  gender: z.enum(['male', 'female'], {
+    required_error: 'Please select a gender',
+  }),
   categories: z.array(z.string()).min(1, 'Please select at least one category'),
   services: z.array(z.string()).min(1, 'Please select at least one service'),
 });
@@ -54,6 +57,7 @@ interface UserProfile {
   full_name: string;
   email_id: string;
   phone_number: string | null;
+  gender: string | null;
 }
 
 const serviceCategories = [
@@ -80,6 +84,8 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [confirmedBookingData, setConfirmedBookingData] = useState<BookingFormData | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -90,24 +96,28 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       email_id: '',
       phone_number: '',
       booking_date: new Date(),
+      gender: 'female',
       categories: [],
       services: [],
     },
   });
 
   const watchedCategories = form.watch('categories');
-  const watchedServices = form.watch('services');
+  const watchedGender = form.watch('gender');
 
   useEffect(() => {
     if (open) {
       fetchUserProfile();
       fetchServices();
       setCurrentStep(1);
+      setBookingConfirmed(false);
+      setConfirmedBookingData(null);
       form.reset({
         full_name: '',
         email_id: '',
         phone_number: '',
         booking_date: new Date(),
+        gender: 'female',
         categories: [],
         services: [],
       });
@@ -169,6 +179,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           email_id: profile.email_id,
           phone_number: profile.phone_number || '',
           booking_date: new Date(),
+          gender: (profile.gender as 'male' | 'female') || 'female',
           categories: [],
           services: [],
         });
@@ -221,9 +232,11 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
     let isValid = false;
     
     if (currentStep === 1) {
-      isValid = await form.trigger(['full_name', 'email_id', 'booking_date']);
+      isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
     } else if (currentStep === 2) {
       isValid = await form.trigger(['categories']);
+    } else if (currentStep === 3) {
+      isValid = await form.trigger(['services']);
     }
     
     if (isValid) {
@@ -273,7 +286,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           services: data.services,
           category_list: data.categories,
           total_amount: totalAmount,
-          amount_paid: totalAmount, // Default to total amount
+          amount_paid: totalAmount,
           status: 'pending',
         });
 
@@ -287,15 +300,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         return;
       }
 
-      toast({
-        title: "✅ Booking Confirmed!",
-        description: "Your appointment has been successfully booked.",
-      });
-
-      setOpen(false);
-      form.reset();
-      onBookingSuccess?.();
-      navigate('/my-bookings');
+      setConfirmedBookingData(data);
+      setBookingConfirmed(true);
+      setCurrentStep(4);
     } catch (error) {
       console.error('Error submitting booking:', error);
       toast({
@@ -308,10 +315,32 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
     }
   };
 
+  // Filter services based on gender and categories
+  const getFilteredServices = () => {
+    return services.filter(service => {
+      // Check if service belongs to selected categories
+      const belongsToCategory = service.category && watchedCategories.includes(service.category.name);
+      if (!belongsToCategory) return false;
+      
+      // Show unisex services to everyone
+      if (!service.gender || service.gender === 'unisex') return true;
+      
+      // Show gender-specific services based on selected gender
+      return service.gender === watchedGender;
+    });
+  };
+
   const groupedServices = watchedCategories.map(category => ({
     category,
-    services: services.filter(service => service.category?.name === category),
+    services: getFilteredServices().filter(service => service.category?.name === category),
   }));
+
+  const calculateTotalAmount = () => {
+    const selectedServices = services.filter(service => 
+      form.getValues('services').includes(service.name)
+    );
+    return selectedServices.reduce((sum, service) => sum + (service.price || 0), 0);
+  };
 
   const stepVariants = {
     initial: { opacity: 0, x: 20 },
@@ -331,30 +360,34 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold gradient-text">
-            Book Your Appointment
+            {bookingConfirmed ? "Booking Confirmed!" : "Book Your Appointment"}
           </DialogTitle>
           
-          {/* Progress indicator */}
-          <div className="flex items-center justify-center space-x-2 mt-4">
-            {[1, 2, 3].map((step) => (
-              <div
-                key={step}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  currentStep >= step ? 'bg-salon-purple' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-          
-          <div className="text-center text-sm text-gray-600 mt-2">
-            Step {currentStep} of 3
-          </div>
+          {!bookingConfirmed && (
+            <>
+              {/* Progress indicator */}
+              <div className="flex items-center justify-center space-x-2 mt-4">
+                {[1, 2, 3].map((step) => (
+                  <div
+                    key={step}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      currentStep >= step ? 'bg-salon-purple' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <div className="text-center text-sm text-gray-600 mt-2">
+                Step {currentStep} of 3
+              </div>
+            </>
+          )}
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <AnimatePresence mode="wait">
-              {/* Step 1: Contact Information */}
+              {/* Step 1: Contact Information & Gender */}
               {currentStep === 1 && (
                 <motion.div
                   key="step1"
@@ -446,6 +479,43 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                             />
                           </PopoverContent>
                         </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-4">
+                            <button
+                              type="button"
+                              onClick={() => field.onChange('female')}
+                              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                                field.value === 'female'
+                                  ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              Female
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange('male')}
+                              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                                field.value === 'male'
+                                  ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              Male
+                            </button>
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -550,7 +620,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                   className="space-y-4"
                 >
                   <h3 className="text-lg font-semibold text-gray-800">Select Services</h3>
-                  <p className="text-sm text-gray-600">Choose specific services from your selected categories</p>
+                  <p className="text-sm text-gray-600">
+                    Services for {watchedGender} and unisex services
+                  </p>
                   
                   <FormField
                     control={form.control}
@@ -588,7 +660,17 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                                                 }}
                                               />
                                               <div className="flex-1">
-                                                <div className="font-medium">{service.name}</div>
+                                                <div className="flex items-center justify-between">
+                                                  <div className="font-medium">{service.name}</div>
+                                                  <div className="text-sm text-gray-500">
+                                                    {service.gender && service.gender !== 'unisex' && (
+                                                      <span className="capitalize">{service.gender}</span>
+                                                    )}
+                                                    {service.gender === 'unisex' && (
+                                                      <span>Unisex</span>
+                                                    )}
+                                                  </div>
+                                                </div>
                                                 {service.price && service.duration_minutes && (
                                                   <div className="text-sm text-gray-500">
                                                     ₹{service.price} • {service.duration_minutes} min
@@ -618,9 +700,92 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                     <Button
                       type="submit"
                       className="bg-salon-purple hover:bg-salon-purple/90"
-                      disabled={loading || watchedServices.length === 0}
+                      disabled={loading || form.getValues('services').length === 0}
                     >
                       {loading ? "Booking..." : "Book Now"}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 4: Booking Confirmation */}
+              {currentStep === 4 && bookingConfirmed && confirmedBookingData && (
+                <motion.div
+                  key="step4"
+                  variants={stepVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6 text-center"
+                >
+                  <div className="flex flex-col items-center space-y-4">
+                    <CheckCircle className="h-16 w-16 text-green-500" />
+                    <h3 className="text-2xl font-bold text-green-600">Booking Confirmed!</h3>
+                    <p className="text-gray-600">Your appointment has been successfully booked.</p>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-6 space-y-4 text-left">
+                    <h4 className="font-semibold text-lg">Booking Details</h4>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date:</span>
+                        <span className="font-medium">
+                          {format(confirmedBookingData.booking_date, "PPP")}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Gender:</span>
+                        <span className="font-medium capitalize">{confirmedBookingData.gender}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-gray-600 font-medium">Selected Services:</span>
+                      <div className="space-y-1">
+                        {confirmedBookingData.services.map((serviceName, index) => {
+                          const service = services.find(s => s.name === serviceName);
+                          return (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span>{serviceName}</span>
+                              {service?.price && (
+                                <span className="font-medium">₹{service.price}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total Amount:</span>
+                        <span className="text-salon-purple">₹{calculateTotalAmount()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={() => {
+                        setOpen(false);
+                        onBookingSuccess?.();
+                        navigate('/my-bookings');
+                      }}
+                      className="bg-salon-purple hover:bg-salon-purple/90"
+                    >
+                      View My Bookings
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setOpen(false);
+                        form.reset();
+                      }}
+                    >
+                      Close
                     </Button>
                   </div>
                 </motion.div>
