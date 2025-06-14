@@ -53,7 +53,7 @@ const Hero = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <SimpleBookingDialog
               trigger={
                 <Button 
@@ -67,25 +67,15 @@ const Hero = () => {
               onBookingSuccess={handleBookingSuccess}
             />
             
-            {!user ? (
-              <Button 
-                onClick={handleSignIn}
-                disabled={isLoading}
-                variant="outline" 
-                size="lg"
-                className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg"
-              >
-                {isLoading ? 'Signing in...' : 'Sign in'}
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg"
-              >
-                View Services
-              </Button>
-            )}
+            <Button 
+              onClick={handleSignIn}
+              disabled={isLoading}
+              variant="outline" 
+              size="lg"
+              className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg"
+            >
+              {isLoading ? 'Signing in...' : 'Sign in with Google'}
+            </Button>
           </div>
 
           {/* Stats */}
