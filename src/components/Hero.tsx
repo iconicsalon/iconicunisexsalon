@@ -52,7 +52,7 @@ const Hero = () => {
             <span>Bengaluru, Karnataka</span>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - Always show both buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
             <SimpleBookingDialog
               trigger={
@@ -67,17 +67,16 @@ const Hero = () => {
               onBookingSuccess={handleBookingSuccess}
             />
             
-            {!user && (
-              <Button 
-                onClick={handleSignIn}
-                disabled={isLoading}
-                variant="outline" 
-                size="lg"
-                className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg w-full sm:w-auto"
-              >
-                {isLoading ? 'Signing in...' : 'Sign in with Google'}
-              </Button>
-            )}
+            {/* Always show Sign in button */}
+            <Button 
+              onClick={handleSignIn}
+              disabled={isLoading}
+              variant="outline" 
+              size="lg"
+              className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg w-full sm:w-auto"
+            >
+              {user ? 'Already Signed In' : (isLoading ? 'Signing in...' : 'Sign in with Google')}
+            </Button>
           </div>
 
           {/* Stats */}
