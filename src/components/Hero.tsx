@@ -52,13 +52,13 @@ const Hero = () => {
             <span>Bengaluru, Karnataka</span>
           </div>
 
-          {/* CTA Buttons - Always show both buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
+          {/* CTA Buttons - Both buttons always visible */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-3xl mx-auto mb-16">
             <SimpleBookingDialog
               trigger={
                 <Button 
                   size="lg" 
-                  className="bg-gradient-salon hover:opacity-90 transition-all duration-300 hover:scale-105 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-2xl w-full sm:w-auto"
+                  className="bg-gradient-salon hover:opacity-90 transition-all duration-300 hover:scale-105 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-2xl w-full sm:w-auto min-w-[200px]"
                 >
                   Book Your Appointment
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -67,20 +67,19 @@ const Hero = () => {
               onBookingSuccess={handleBookingSuccess}
             />
             
-            {/* Always show Sign in button */}
             <Button 
               onClick={handleSignIn}
               disabled={isLoading}
               variant="outline" 
               size="lg"
-              className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg w-full sm:w-auto"
+              className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl bg-white shadow-lg w-full sm:w-auto min-w-[200px]"
             >
               {user ? 'Already Signed In' : (isLoading ? 'Signing in...' : 'Sign in with Google')}
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-16 max-w-md mx-auto">
+          <div className="grid grid-cols-3 gap-8 max-w-md mx-auto">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold gradient-text">1000+</div>
               <div className="text-sm text-gray-500 mt-1">Happy Clients</div>
