@@ -358,26 +358,26 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       </DialogTrigger>
       <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold gradient-text">
+          <DialogTitle className="text-2xl font-bold text-gray-900">
             {bookingConfirmed ? "Booking Confirmed!" : "Book Your Appointment"}
           </DialogTitle>
           
           {!bookingConfirmed && (
             <>
+              <div className="text-sm text-gray-600 mt-2">
+                Step {currentStep} of 3: {currentStep === 1 ? "Confirm Details & Select Date" : currentStep === 2 ? "Select Categories" : "Select Services"}
+              </div>
+              
               {/* Progress indicator */}
               <div className="flex items-center justify-center space-x-2 mt-4">
                 {[1, 2, 3].map((step) => (
                   <div
                     key={step}
                     className={`w-3 h-3 rounded-full transition-colors ${
-                      currentStep >= step ? 'bg-salon-purple' : 'bg-gray-300'
+                      currentStep >= step ? 'bg-pink-500' : 'bg-gray-300'
                     }`}
                   />
                 ))}
-              </div>
-              
-              <div className="text-center text-sm text-gray-600 mt-2">
-                Step {currentStep} of 3
               </div>
             </>
           )}
@@ -395,134 +395,163 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                   animate="animate"
                   exit="exit"
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
-                  
-                  <FormField
-                    control={form.control}
-                    name="full_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="bg-gray-50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" disabled className="bg-gray-50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="bg-gray-50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="booking_date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Booking Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                    
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="full_name"
+                        render={({ field }) => (
+                          <FormItem>
                             <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                              <Input 
+                                {...field} 
+                                disabled 
+                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                placeholder="Jane Doe"
+                              />
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <CalendarComponent
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-4">
-                            <button
-                              type="button"
-                              onClick={() => field.onChange('female')}
-                              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
-                                field.value === 'female'
-                                  ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              Female
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => field.onChange('male')}
-                              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
-                                field.value === 'male'
-                                  ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              Male
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={form.control}
+                        name="email_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                type="email" 
+                                disabled 
+                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                placeholder="jane.doe@example.com"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                disabled 
+                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                placeholder="+91 98765 43210"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium text-gray-900">
+                            Gender <span className="text-pink-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="flex gap-4 mt-2">
+                              <button
+                                type="button"
+                                onClick={() => field.onChange('male')}
+                                className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                                  field.value === 'male'
+                                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                }`}
+                              >
+                                Male
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => field.onChange('female')}
+                                className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                                  field.value === 'female'
+                                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                }`}
+                              >
+                                Female
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="booking_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium text-gray-900">
+                            Booking Date <span className="text-pink-500">*</span>
+                          </FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full h-12 px-4 text-left font-normal border-gray-300 bg-white hover:bg-gray-50",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "dd/MM/yyyy")
+                                  ) : (
+                                    <span className="text-gray-500">mm/dd/yyyy</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date < new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
-                  <div className="flex justify-end pt-4">
-                    <Button type="button" onClick={nextStep}>
-                      Next Step <ChevronRight className="ml-2 h-4 w-4" />
+                  <div className="pt-4">
+                    <Button 
+                      type="button" 
+                      onClick={nextStep}
+                      className="w-full bg-pink-500 hover:bg-pink-600 text-white h-12 rounded-lg font-medium"
+                    >
+                      Next
                     </Button>
                   </div>
                 </motion.div>
