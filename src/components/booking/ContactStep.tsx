@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import type { BookingFormData } from '@/hooks/useMultiStepBooking';
+import { useUserStore } from '@/stores/userStore';
 import {
   FormControl,
   FormField,
@@ -28,6 +29,8 @@ interface ContactStepProps {
 }
 
 const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
+  const { profile } = useUserStore();
+  
   const stepVariants = {
     initial: { opacity: 0, x: 20 },
     animate: { opacity: 1, x: 0 },
@@ -55,9 +58,10 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                 <FormControl>
                   <Input 
                     {...field} 
+                    value={field.value || profile?.full_name || ''}
                     disabled 
                     className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                    placeholder="Jane Doe"
+                    placeholder="Your Name"
                   />
                 </FormControl>
                 <FormMessage />
@@ -73,10 +77,11 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                 <FormControl>
                   <Input 
                     {...field} 
+                    value={field.value || profile?.email_id || ''}
                     type="email" 
                     disabled 
                     className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                    placeholder="jane.doe@example.com"
+                    placeholder="your.email@example.com"
                   />
                 </FormControl>
                 <FormMessage />
@@ -92,6 +97,7 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                 <FormControl>
                   <Input 
                     {...field} 
+                    value={field.value || profile?.phone_number || ''}
                     disabled 
                     className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
                     placeholder="+91 98765 43210"

@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/stores/userStore';
 import type { Service } from '@/types/service';
 
 const bookingSchema = z.object({
@@ -24,23 +25,15 @@ const bookingSchema = z.object({
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
 
-interface UserProfile {
-  id: string;
-  full_name: string;
-  email_id: string;
-  phone_number: string | null;
-  gender: string | null;
-}
-
 export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState<BookingFormData | null>(null);
   const { toast } = useToast();
+  const { profile } = useUserStore();
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -64,64 +57,14 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
     setConfirmedBookingData(null);
     setSubmitting(false);
     form.reset({
-      full_name: '',
-      email_id: '',
-      phone_number: '',
+      full_name: profile?.full_name || '',
+      email_id: profile?.email_id || '',
+      phone_number: profile?.phone_number || '',
       booking_date: new Date(),
-      gender: 'female',
+      gender: (profile?.gender as 'male' | 'female') || 'female',
       categories: [],
       services: [],
     });
-  };
-
-  const fetchUserProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to book an appointment.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load your profile information.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (profile) {
-        setUserProfile(profile);
-        form.reset({
-          full_name: profile.full_name,
-          email_id: profile.email_id,
-          phone_number: profile.phone_number || '',
-          booking_date: new Date(),
-          gender: (profile.gender as 'male' | 'female') || 'female',
-          categories: [],
-          services: [],
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your profile information.",
-        variant: "destructive",
-      });
-    }
   };
 
   const fetchServices = async () => {
@@ -184,7 +127,7 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
       return;
     }
 
-    if (!userProfile) {
+    if (!profile) {
       toast({
         title: "Error",
         description: "User profile not found. Please try again.",
@@ -286,8 +229,22 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
     return selectedServices.reduce((sum, service) => sum + (service.price || 0), 0);
   };
 
+  // Initialize form with profile data when profile is available
   useEffect(() => {
-    fetchUserProfile();
+    if (profile) {
+      form.reset({
+        full_name: profile.full_name || '',
+        email_id: profile.email_id || '',
+        phone_number: profile.phone_number || '',
+        booking_date: new Date(),
+        gender: (profile.gender as 'male' | 'female') || 'female',
+        categories: [],
+        services: [],
+      });
+    }
+  }, [profile, form]);
+
+  useEffect(() => {
     fetchServices();
   }, []);
 
@@ -315,7 +272,6 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
     loading,
     submitting,
     services,
-    userProfile,
     bookingConfirmed,
     confirmedBookingData,
     watchedCategories,
