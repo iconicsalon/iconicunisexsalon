@@ -47,13 +47,14 @@ const Index = () => {
               Experience premium beauty and grooming services in the heart of Bengaluru
             </p>
             
-            {/* Buttons Container - Both buttons with consistent styling */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+            {/* Buttons Container - Enhanced for mobile elegance */}
+            <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-8 px-4">
               <MultiStepBookingDialog
                 trigger={
-                  <button className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-salon-purple rounded-xl font-medium text-sm border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm min-w-[160px]">
-                    <Calendar size={16} />
-                    Book Appointment
+                  <button className="group relative w-full sm:w-auto min-w-[220px] inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-salon text-white rounded-2xl font-semibold text-base shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 border-2 border-white/20 backdrop-blur-sm">
+                    <Calendar size={20} className="group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Book Appointment</span>
+                    <div className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </button>
                 }
                 onBookingSuccess={handleBookingSuccess}
@@ -62,16 +63,17 @@ const Index = () => {
               <button 
                 onClick={handleSignIn}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 rounded-xl font-medium text-sm border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm min-w-[160px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full sm:w-auto min-w-[220px] inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/95 backdrop-blur-sm text-gray-800 rounded-2xl font-semibold text-base border-2 border-white/40 hover:bg-white hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <svg width="16" height="16" viewBox="0 0 48 48" className="flex-shrink-0">
+                <svg width="20" height="20" viewBox="0 0 48 48" className="flex-shrink-0 group-hover:rotate-12 transition-transform duration-300">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                   <path fill="none" d="M0 0h48v48H0z"></path>
                 </svg>
-                {user ? 'Signed In' : (isLoading ? 'Signing in...' : 'Sign In')}
+                <span>{user ? 'Signed In' : (isLoading ? 'Signing in...' : 'Sign In')}</span>
+                <div className="absolute inset-0 rounded-2xl bg-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
             </div>
           </div>
