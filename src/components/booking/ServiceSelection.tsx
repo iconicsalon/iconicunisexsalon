@@ -9,98 +9,110 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { BookingFormData } from '@/hooks/useBookingForm';
-import { useServices } from '@/hooks/useServices';
+import { Badge } from '@/components/ui/badge';
+import type { Service } from '@/types/service';
 
 interface ServiceSelectionProps {
-  form: UseFormReturn<BookingFormData>;
+  form: UseFormReturn<any>;
+  services: Service[];
 }
 
-const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form }) => {
-  const { services, categories, loading } = useServices();
-
-  if (loading) {
-    return <div className="text-center py-4">Loading services...</div>;
-  }
-
+const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form, services }) => {
   // Group services by category
-  const groupedServices = categories.map(category => ({
-    ...category,
-    services: services.filter(service => service.category_id === category.id),
-  }));
+  const servicesByCategory = services.reduce((acc, service) => {
+    const categoryName = service.category?.name || 'Other';
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(service);
+    return acc;
+  }, {} as Record<string, Service[]>);
 
   return (
-    <FormField
-      control={form.control}
-      name="services"
-      render={() => (
-        <FormItem>
-          <div className="mb-4">
-            <FormLabel className="text-lg font-semibold">
-              Select Services
-            </FormLabel>
-          </div>
-          <div className="space-y-6">
-            {groupedServices.map((category) => (
-              <div key={category.id} className="space-y-3">
-                <h4 className="text-md font-medium text-salon-purple flex items-center gap-2">
-                  <span>{category.icon}</span>
-                  {category.name}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-6">
-                  {category.services.map((service) => (
-                    <FormField
-                      key={service.id}
-                      control={form.control}
-                      name="services"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={service.id}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(service.name)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, service.name])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== service.name
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm font-normal">
-                                {service.name}
-                              </FormLabel>
-                              {service.description && (
-                                <p className="text-xs text-gray-400">
-                                  {service.description}
-                                </p>
-                              )}
-                              {service.price && (
-                                <p className="text-xs text-gray-500">
-                                  ₹{service.price} • {service.duration_minutes} min
-                                </p>
-                              )}
-                            </div>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
+    <div className="space-y-6">
+      <FormField
+        control={form.control}
+        name="services"
+        render={() => (
+          <FormItem>
+            <FormLabel className="text-lg font-semibold">Select Services</FormLabel>
+            <div className="space-y-4">
+              {Object.entries(servicesByCategory).map(([categoryName, categoryServices]) => (
+                <div key={categoryName} className="border rounded-lg p-4">
+                  <h3 className="font-medium text-salon-purple mb-3 flex items-center gap-2">
+                    {categoryServices[0]?.category?.icon && (
+                      <span>{categoryServices[0].category.icon}</span>
+                    )}
+                    {categoryName}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {categoryServices.map((service) => (
+                      <FormField
+                        key={service.id}
+                        control={form.control}
+                        name="services"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={service.id}
+                              className="flex flex-row items-start space-x-3 space-y-0 p-3 border rounded-md hover:bg-gray-50"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(service.name)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, service.name])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value: string) => value !== service.name
+                                          )
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-medium cursor-pointer">
+                                    {service.name}
+                                  </FormLabel>
+                                  <div className="flex items-center gap-2">
+                                    {service.price && (
+                                      <Badge variant="outline">₹{service.price}</Badge>
+                                    )}
+                                    {service.is_featured && (
+                                      <Badge className="bg-salon-purple">Featured</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                {service.description && (
+                                  <p className="text-sm text-gray-600">{service.description}</p>
+                                )}
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  {service.duration_minutes && (
+                                    <span>{service.duration_minutes} mins</span>
+                                  )}
+                                  {service.gender && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {service.gender}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+              ))}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 };
 

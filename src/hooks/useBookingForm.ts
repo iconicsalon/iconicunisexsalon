@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Service } from '@/types/service';
 
 const bookingSchema = z.object({
   full_name: z.string().min(1, 'Full name is required'),
@@ -18,14 +19,6 @@ const bookingSchema = z.object({
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
-
-interface Service {
-  id: string;
-  name: string;
-  category: string;
-  price: number | null;
-  duration_minutes: number | null;
-}
 
 interface UserProfile {
   id: string;
@@ -103,9 +96,12 @@ export const useBookingForm = (onBookingSuccess?: () => void) => {
     try {
       const { data, error } = await supabase
         .from('services')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .select(`
+          *,
+          category:service_categories(*)
+        `)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
 
       if (error) {
         console.error('Error fetching services:', error);
