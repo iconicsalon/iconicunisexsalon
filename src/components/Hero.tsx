@@ -1,11 +1,23 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, MapPin } from 'lucide-react';
 import SimpleBookingDialog from './SimpleBookingDialog';
+import { useUserStore } from '@/stores/userStore';
 
 const Hero = () => {
+  const { user, signInWithGoogle, isLoading } = useUserStore();
+  
   const handleBookingSuccess = () => {
     console.log('Booking was successful! Refresh booking lists here.');
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Sign in error:', error);
+    }
   };
 
   return (
@@ -54,13 +66,26 @@ const Hero = () => {
               }
               onBookingSuccess={handleBookingSuccess}
             />
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl"
-            >
-              View Services
-            </Button>
+            
+            {!user ? (
+              <Button 
+                onClick={handleSignIn}
+                disabled={isLoading}
+                variant="outline" 
+                size="lg"
+                className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl"
+              >
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-2 border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white transition-all duration-300 px-8 py-6 text-lg font-semibold rounded-xl"
+              >
+                View Services
+              </Button>
+            )}
           </div>
 
           {/* Stats */}
