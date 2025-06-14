@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Calendar, Filter } from 'lucide-react';
+import { Search, Calendar, Filter, Check, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Booking {
   id: string;
@@ -26,6 +27,7 @@ interface Booking {
   services: string[];
   status: string;
   total_amount: number | null;
+  amount_paid: number | null;
   created_at: string;
   customer_name?: string;
   customer_email?: string;
@@ -39,6 +41,9 @@ const AdminBookings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
+  const [editingAmountId, setEditingAmountId] = useState<string | null>(null);
+  const [tempAmount, setTempAmount] = useState('');
+  const { toast } = useToast();
 
   const fetchBookings = async () => {
     try {
@@ -74,9 +79,96 @@ const AdminBookings = () => {
       setFilteredBookings(bookingsWithProfiles);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch bookings.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      // Update local state
+      setBookings(prev => prev.map(booking => 
+        booking.id === bookingId ? { ...booking, status: newStatus } : booking
+      ));
+
+      toast({
+        title: "Success",
+        description: `Booking status updated to ${newStatus}.`,
+      });
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update booking status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateAmountPaid = async (bookingId: string, amount: number) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ amount_paid: amount })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      // Update local state
+      setBookings(prev => prev.map(booking => 
+        booking.id === bookingId ? { ...booking, amount_paid: amount } : booking
+      ));
+
+      setEditingAmountId(null);
+      setTempAmount('');
+
+      toast({
+        title: "Success",
+        description: "Amount paid updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating amount paid:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update amount paid.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAmountEdit = (bookingId: string, currentAmount: number | null) => {
+    setEditingAmountId(bookingId);
+    setTempAmount(currentAmount?.toString() || '');
+  };
+
+  const handleAmountSave = (bookingId: string) => {
+    const amount = parseFloat(tempAmount);
+    if (isNaN(amount) || amount < 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateAmountPaid(bookingId, amount);
+  };
+
+  const handleAmountCancel = () => {
+    setEditingAmountId(null);
+    setTempAmount('');
   };
 
   useEffect(() => {
@@ -116,7 +208,7 @@ const AdminBookings = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'done':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
@@ -166,7 +258,7 @@ const AdminBookings = () => {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
@@ -202,13 +294,15 @@ const AdminBookings = () => {
                         <TableHead>Booking Date</TableHead>
                         <TableHead>Services</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Amount</TableHead>
+                        <TableHead>Total Amount</TableHead>
+                        <TableHead>Amount Paid</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredBookings.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8">
+                          <TableCell colSpan={8} className="text-center py-8">
                             No bookings found matching your criteria
                           </TableCell>
                         </TableRow>
@@ -237,12 +331,75 @@ const AdminBookings = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getStatusColor(booking.status || 'pending')}>
-                                {booking.status || 'pending'}
-                              </Badge>
+                              <Select
+                                value={booking.status || 'pending'}
+                                onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue>
+                                    <Badge className={getStatusColor(booking.status || 'pending')}>
+                                      {booking.status || 'pending'}
+                                    </Badge>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="done">Done</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell>
                               {booking.total_amount ? `₹${booking.total_amount}` : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {editingAmountId === booking.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    value={tempAmount}
+                                    onChange={(e) => setTempAmount(e.target.value)}
+                                    className="w-20"
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAmountSave(booking.id)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleAmountCancel}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => handleAmountEdit(booking.id, booking.amount_paid)}
+                                  className="text-left p-0 h-auto font-normal"
+                                >
+                                  {booking.amount_paid ? `₹${booking.amount_paid}` : 'Set amount'}
+                                </Button>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                {booking.status === 'pending' && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => updateBookingStatus(booking.id, 'done')}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    Mark Done
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))

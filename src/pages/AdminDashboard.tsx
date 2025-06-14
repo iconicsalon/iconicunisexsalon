@@ -14,15 +14,17 @@ import {
   DollarSign, 
   Users, 
   TrendingUp,
-  Filter
+  Filter,
+  CheckCircle
 } from 'lucide-react';
 
 interface DashboardStats {
   totalBookings: number;
   monthlyBookings: number;
-  menBookings: number;
-  womenBookings: number;
+  completedBookings: number;
+  pendingBookings: number;
   totalRevenue: number;
+  monthlyRevenue: number;
 }
 
 interface Booking {
@@ -32,6 +34,7 @@ interface Booking {
   services: string[];
   status: string;
   total_amount: number | null;
+  amount_paid: number | null;
   created_at: string;
   customer_name?: string;
   customer_phone?: string;
@@ -41,28 +44,14 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalBookings: 0,
     monthlyBookings: 0,
-    menBookings: 0,
-    womenBookings: 0,
+    completedBookings: 0,
+    pendingBookings: 0,
     totalRevenue: 0,
+    monthlyRevenue: 0,
   });
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [isLoading, setIsLoading] = useState(true);
-
-  const categorizeService = (service: string): 'men' | 'women' | 'unisex' => {
-    const menKeywords = ['beard', 'haircut', 'shave', 'mustache'];
-    const womenKeywords = ['facial', 'waxing', 'eyebrow', 'manicure', 'pedicure', 'hair spa'];
-    
-    const serviceLower = service.toLowerCase();
-    
-    if (menKeywords.some(keyword => serviceLower.includes(keyword))) {
-      return 'men';
-    }
-    if (womenKeywords.some(keyword => serviceLower.includes(keyword))) {
-      return 'women';
-    }
-    return 'unisex';
-  };
 
   const fetchDashboardData = async () => {
     try {
@@ -108,34 +97,39 @@ const AdminDashboard = () => {
       }
 
       // Calculate stats
-      let menCount = 0;
-      let womenCount = 0;
       let totalRevenue = 0;
+      let monthlyRevenue = 0;
+      let completedBookings = 0;
+      let pendingBookings = 0;
 
       allBookings?.forEach(booking => {
-        // Calculate revenue
-        if (booking.total_amount) {
-          totalRevenue += Number(booking.total_amount);
+        // Calculate total revenue from completed bookings
+        if (booking.status === 'done' && booking.amount_paid) {
+          totalRevenue += Number(booking.amount_paid);
         }
+        
+        // Count completed and pending bookings
+        if (booking.status === 'done') {
+          completedBookings++;
+        } else if (booking.status === 'pending') {
+          pendingBookings++;
+        }
+      });
 
-        // Categorize by service
-        const hasWomenService = booking.services.some(service => 
-          categorizeService(service) === 'women'
-        );
-        const hasMenService = booking.services.some(service => 
-          categorizeService(service) === 'men'
-        );
-
-        if (hasWomenService) womenCount++;
-        if (hasMenService) menCount++;
+      // Calculate monthly revenue from completed bookings
+      monthlyBookingsData?.forEach(booking => {
+        if (booking.status === 'done' && booking.amount_paid) {
+          monthlyRevenue += Number(booking.amount_paid);
+        }
       });
 
       setStats({
         totalBookings: allBookings?.length || 0,
         monthlyBookings: monthlyBookingsData?.length || 0,
-        menBookings: menCount,
-        womenBookings: womenCount,
+        completedBookings,
+        pendingBookings,
         totalRevenue,
+        monthlyRevenue,
       });
 
       setRecentBookings(recentBookingsWithProfiles);
@@ -152,7 +146,7 @@ const AdminDashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'done':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
@@ -223,23 +217,50 @@ const AdminDashboard = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Men's Services</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Completed Bookings</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.menBookings}</div>
+                <div className="text-2xl font-bold">{stats.completedBookings}</div>
                 <p className="text-xs text-muted-foreground">All time</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Women's Services</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">From completed bookings</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Revenue Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">₹{stats.monthlyRevenue.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(selectedMonth), 'MMMM yyyy')}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.womenBookings}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
+                <div className="text-2xl font-bold">{stats.pendingBookings}</div>
+                <p className="text-xs text-muted-foreground">Awaiting completion</p>
               </CardContent>
             </Card>
           </div>
@@ -279,12 +300,19 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        {booking.total_amount && (
-                          <p className="font-semibold text-salon-purple">
-                            ₹{booking.total_amount}
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-600">
+                        <div className="space-y-1">
+                          {booking.total_amount && (
+                            <p className="text-sm text-gray-600">
+                              Total: ₹{booking.total_amount}
+                            </p>
+                          )}
+                          {booking.amount_paid && (
+                            <p className="font-semibold text-salon-purple">
+                              Paid: ₹{booking.amount_paid}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
                           {booking.customer_phone}
                         </p>
                       </div>

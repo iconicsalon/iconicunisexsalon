@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import type { Service } from '@/types/service';
 import {
   Dialog,
   DialogContent,
@@ -47,14 +47,6 @@ const bookingSchema = z.object({
 });
 
 type BookingFormData = z.infer<typeof bookingSchema>;
-
-interface Service {
-  id: string;
-  name: string;
-  category: string;
-  price: number | null;
-  duration_minutes: number | null;
-}
 
 interface UserProfile {
   id: string;
@@ -129,7 +121,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       // Remove services that don't belong to selected categories
       const validServices = watchedServices.filter(serviceName => {
         const service = services.find(s => s.name === serviceName);
-        return service && watchedCategories.includes(service.category);
+        return service && service.category && watchedCategories.includes(service.category.name);
       });
       if (validServices.length !== watchedServices.length) {
         form.setValue('services', validServices);
@@ -190,9 +182,12 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
     try {
       const { data, error } = await supabase
         .from('services')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .select(`
+          *,
+          category:service_categories(*)
+        `)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
 
       if (error) {
         console.error('Error fetching services:', error);
@@ -271,6 +266,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           services: data.services,
           category_list: data.categories,
           total_amount: totalAmount,
+          amount_paid: totalAmount, // Default to total amount
           status: 'pending',
         });
 
@@ -306,12 +302,12 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   };
 
   const filteredServices = services.filter(service => 
-    watchedCategories.includes(service.category)
+    service.category && watchedCategories.includes(service.category.name)
   );
 
   const groupedServices = watchedCategories.map(category => ({
     category,
-    services: services.filter(service => service.category === category),
+    services: services.filter(service => service.category?.name === category),
   }));
 
   const stepVariants = {
