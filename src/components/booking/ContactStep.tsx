@@ -1,0 +1,207 @@
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { UseFormReturn } from 'react-hook-form';
+import { cn } from '@/lib/utils';
+import type { BookingFormData } from '@/hooks/useMultiStepBooking';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+
+interface ContactStepProps {
+  form: UseFormReturn<BookingFormData>;
+  onNext: () => void;
+}
+
+const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
+  const stepVariants = {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 }
+  };
+
+  return (
+    <motion.div
+      variants={stepVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+        
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="full_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    disabled 
+                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    placeholder="Jane Doe"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    type="email" 
+                    disabled 
+                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    placeholder="jane.doe@example.com"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="phone_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    disabled 
+                    className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                    placeholder="+91 98765 43210"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+
+      <div>
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base font-medium text-gray-900">
+                Gender <span className="text-pink-500">*</span>
+              </FormLabel>
+              <FormControl>
+                <div className="flex gap-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('male')}
+                    className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                      field.value === 'male'
+                        ? 'border-pink-500 bg-pink-50 text-pink-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    }`}
+                  >
+                    Male
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('female')}
+                    className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                      field.value === 'female'
+                        ? 'border-pink-500 bg-pink-50 text-pink-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    }`}
+                  >
+                    Female
+                  </button>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div>
+        <FormField
+          control={form.control}
+          name="booking_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base font-medium text-gray-900">
+                Booking Date <span className="text-pink-500">*</span>
+              </FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-12 px-4 text-left font-normal border-gray-300 bg-white hover:bg-gray-50",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "dd/MM/yyyy")
+                      ) : (
+                        <span className="text-gray-500">mm/dd/yyyy</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date < new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      
+      <div className="pt-4">
+        <Button 
+          type="button" 
+          onClick={onNext}
+          className="w-full bg-pink-500 hover:bg-pink-600 text-white h-12 rounded-lg font-medium"
+        >
+          Next
+        </Button>
+      </div>
+    </motion.div>
+  );
+};
+
+export default ContactStep;
