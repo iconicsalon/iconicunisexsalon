@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -277,13 +278,20 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         sum + (service.price || 0), 0
       );
 
+      // Filter categories to only include those with selected services
+      const categoriesWithSelectedServices = data.categories.filter(category => {
+        return selectedServices.some(service => 
+          service.category && service.category.name === category
+        );
+      });
+
       const { error } = await supabase
         .from('bookings')
         .insert({
           user_id: user.id,
           booking_date: format(data.booking_date, 'yyyy-MM-dd'),
           services: data.services,
-          category_list: data.categories,
+          category_list: categoriesWithSelectedServices, // Only save categories with selected services
           total_amount: totalAmount,
           amount_paid: totalAmount,
           status: 'pending',
