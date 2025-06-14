@@ -41,6 +41,17 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
     console.log('ContactStep handleNext called');
     console.log('Current form values:', form.getValues());
     
+    // Ensure form has profile data
+    if (profile?.full_name && !form.getValues('full_name')) {
+      form.setValue('full_name', profile.full_name);
+    }
+    if (profile?.email_id && !form.getValues('email_id')) {
+      form.setValue('email_id', profile.email_id);
+    }
+    if (profile?.phone_number && !form.getValues('phone_number')) {
+      form.setValue('phone_number', profile.phone_number);
+    }
+    
     // Trigger validation for step 1 fields
     const isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
     console.log('Step 1 validation result:', isValid);
@@ -140,7 +151,10 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                 <div className="flex gap-4 mt-2">
                   <button
                     type="button"
-                    onClick={() => field.onChange('male')}
+                    onClick={() => {
+                      console.log('Male button clicked');
+                      field.onChange('male');
+                    }}
                     className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
                       field.value === 'male'
                         ? 'border-pink-500 bg-pink-50 text-pink-700'
@@ -151,7 +165,10 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => field.onChange('female')}
+                    onClick={() => {
+                      console.log('Female button clicked');
+                      field.onChange('female');
+                    }}
                     className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
                       field.value === 'female'
                         ? 'border-pink-500 bg-pink-50 text-pink-700'
@@ -200,7 +217,10 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <CalendarComponent
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      console.log('Date selected:', date);
+                      field.onChange(date);
+                    }}
                     disabled={(date) =>
                       date < new Date() || date < new Date("1900-01-01")
                     }

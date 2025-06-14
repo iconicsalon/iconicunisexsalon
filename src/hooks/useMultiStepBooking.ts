@@ -59,21 +59,6 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
     
     if (currentStep === 1) {
       console.log('Validating step 1 fields');
-      // Ensure required fields have values before validation
-      const currentValues = form.getValues();
-      console.log('Current form values before validation:', currentValues);
-      
-      // Set form values from profile if they're empty
-      if (!currentValues.full_name && profile?.full_name) {
-        form.setValue('full_name', profile.full_name);
-      }
-      if (!currentValues.email_id && profile?.email_id) {
-        form.setValue('email_id', profile.email_id);
-      }
-      if (profile?.phone_number) {
-        form.setValue('phone_number', profile.phone_number);
-      }
-      
       isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
       console.log('Step 1 validation result:', isValid);
       console.log('Form errors:', form.formState.errors);
@@ -261,12 +246,14 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
   useEffect(() => {
     if (profile) {
       console.log('Initializing form with profile data:', profile);
+      const defaultGender = (profile.gender as 'male' | 'female') || 'female';
+      
       form.reset({
         full_name: profile.full_name || '',
         email_id: profile.email_id || '',
         phone_number: profile.phone_number || '',
         booking_date: new Date(),
-        gender: (profile.gender as 'male' | 'female') || 'female',
+        gender: defaultGender,
         categories: [],
         services: [],
       });
