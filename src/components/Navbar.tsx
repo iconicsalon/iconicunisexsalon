@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/stores/userStore';
 import { useToast } from '@/hooks/use-toast';
-import GoogleSignInButton from './GoogleSignInButton';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -107,10 +105,13 @@ const Navbar = () => {
             </Button>
             
             {!user ? (
-              <GoogleSignInButton 
+              <Button 
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-              />
+                className="bg-gradient-salon hover:opacity-90 transition-opacity"
+              >
+                {isLoading ? 'Signing in...' : 'Sign in with Google'}
+              </Button>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -188,11 +189,13 @@ const Navbar = () => {
                   </Button>
                   
                   {!user ? (
-                    <GoogleSignInButton 
+                    <Button 
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
-                      className="w-full"
-                    />
+                      className="w-full bg-gradient-salon hover:opacity-90 transition-opacity"
+                    >
+                      {isLoading ? 'Signing in...' : 'Sign in with Google'}
+                    </Button>
                   ) : (
                     <div className="space-y-2">
                       <div className="text-sm text-gray-600 px-2 py-1">
