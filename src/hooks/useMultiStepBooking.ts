@@ -59,6 +59,24 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
     
     if (currentStep === 1) {
       console.log('Validating step 1 fields');
+      
+      // Get current form values for debugging
+      const formValues = form.getValues();
+      console.log('Form values before validation:', formValues);
+      
+      // Ensure profile data is set in form before validation
+      if (profile) {
+        if (!formValues.full_name && profile.full_name) {
+          form.setValue('full_name', profile.full_name);
+        }
+        if (!formValues.email_id && profile.email_id) {
+          form.setValue('email_id', profile.email_id);
+        }
+        if (profile.phone_number) {
+          form.setValue('phone_number', profile.phone_number);
+        }
+      }
+      
       isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
       console.log('Step 1 validation result:', isValid);
       console.log('Form errors:', form.formState.errors);
@@ -85,11 +103,14 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
   };
 
   const resetBooking = () => {
+    console.log('Resetting booking form');
     setCurrentStep(1);
     setBookingConfirmed(false);
     setConfirmedBookingData(null);
     setSubmitting(false);
-    form.reset({
+    
+    // Reset form with profile data
+    const defaultValues = {
       full_name: profile?.full_name || '',
       email_id: profile?.email_id || '',
       phone_number: profile?.phone_number || '',
@@ -97,7 +118,10 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
       gender: (profile?.gender as 'male' | 'female') || 'female',
       categories: [],
       services: [],
-    });
+    };
+    
+    console.log('Resetting form with default values:', defaultValues);
+    form.reset(defaultValues);
   };
 
   const fetchServices = async () => {
@@ -245,10 +269,10 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
   // Initialize form with profile data when profile is available
   useEffect(() => {
     if (profile) {
-      console.log('Initializing form with profile data:', profile);
+      console.log('Hook: Initializing form with profile data:', profile);
       const defaultGender = (profile.gender as 'male' | 'female') || 'female';
       
-      form.reset({
+      const initialValues = {
         full_name: profile.full_name || '',
         email_id: profile.email_id || '',
         phone_number: profile.phone_number || '',
@@ -256,7 +280,10 @@ export const useMultiStepBooking = (onBookingSuccess?: () => void) => {
         gender: defaultGender,
         categories: [],
         services: [],
-      });
+      };
+      
+      console.log('Hook: Setting initial form values:', initialValues);
+      form.reset(initialValues);
     }
   }, [profile, form]);
 

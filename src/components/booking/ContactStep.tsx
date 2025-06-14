@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -37,20 +37,36 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
     exit: { opacity: 0, x: -20 }
   };
 
+  // Initialize form with profile data when component mounts
+  useEffect(() => {
+    if (profile) {
+      console.log('ContactStep: Initializing form with profile data:', profile);
+      
+      // Set form values if they're not already set
+      if (!form.getValues('full_name') && profile.full_name) {
+        form.setValue('full_name', profile.full_name);
+      }
+      if (!form.getValues('email_id') && profile.email_id) {
+        form.setValue('email_id', profile.email_id);
+      }
+      if (!form.getValues('phone_number') && profile.phone_number) {
+        form.setValue('phone_number', profile.phone_number);
+      }
+      if (!form.getValues('gender') && profile.gender) {
+        form.setValue('gender', profile.gender as 'male' | 'female');
+      }
+      if (!form.getValues('booking_date')) {
+        form.setValue('booking_date', new Date());
+      }
+    }
+  }, [profile, form]);
+
   const handleNext = async () => {
     console.log('ContactStep handleNext called');
     console.log('Current form values:', form.getValues());
     
-    // Ensure form has profile data
-    if (profile?.full_name && !form.getValues('full_name')) {
-      form.setValue('full_name', profile.full_name);
-    }
-    if (profile?.email_id && !form.getValues('email_id')) {
-      form.setValue('email_id', profile.email_id);
-    }
-    if (profile?.phone_number && !form.getValues('phone_number')) {
-      form.setValue('phone_number', profile.phone_number);
-    }
+    const formData = form.getValues();
+    console.log('Form data before validation:', formData);
     
     // Trigger validation for step 1 fields
     const isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
@@ -62,6 +78,11 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
       onNext();
     } else {
       console.log('Validation failed, not proceeding');
+      console.log('Individual field states:');
+      console.log('full_name:', formData.full_name);
+      console.log('email_id:', formData.email_id);
+      console.log('booking_date:', formData.booking_date);
+      console.log('gender:', formData.gender);
     }
   };
 
@@ -152,8 +173,9 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log('Male button clicked');
+                      console.log('Male button clicked, setting gender to male');
                       field.onChange('male');
+                      form.clearErrors('gender');
                     }}
                     className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
                       field.value === 'male'
@@ -166,8 +188,9 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log('Female button clicked');
+                      console.log('Female button clicked, setting gender to female');
                       field.onChange('female');
+                      form.clearErrors('gender');
                     }}
                     className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
                       field.value === 'female'
@@ -220,6 +243,7 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                     onSelect={(date) => {
                       console.log('Date selected:', date);
                       field.onChange(date);
+                      form.clearErrors('booking_date');
                     }}
                     disabled={(date) =>
                       date < new Date() || date < new Date("1900-01-01")
