@@ -410,469 +410,471 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           )}
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <AnimatePresence mode="wait">
-              {/* Step 1: Contact Information & Gender */}
-              {currentStep === 1 && (
-                <motion.div
-                  key="step1"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-                    
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="full_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                disabled 
-                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                                placeholder="Jane Doe"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="email_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="email" 
-                                disabled 
-                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                                placeholder="jane.doe@example.com"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone_number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                disabled 
-                                className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                                placeholder="+91 98765 43210"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base font-medium text-gray-900">
-                            Gender <span className="text-pink-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex gap-4 mt-2">
-                              <button
-                                type="button"
-                                onClick={() => field.onChange('male')}
-                                className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
-                                  field.value === 'male'
-                                    ? 'border-pink-500 bg-pink-50 text-pink-700'
-                                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                                }`}
-                              >
-                                Male
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => field.onChange('female')}
-                                className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
-                                  field.value === 'female'
-                                    ? 'border-pink-500 bg-pink-50 text-pink-700'
-                                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                                }`}
-                              >
-                                Female
-                              </button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="booking_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base font-medium text-gray-900">
-                            Booking Date <span className="text-pink-500">*</span>
-                          </FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full h-12 px-4 text-left font-normal border-gray-300 bg-white hover:bg-gray-50",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "dd/MM/yyyy")
-                                  ) : (
-                                    <span className="text-gray-500">mm/dd/yyyy</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <CalendarComponent
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date < new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button 
-                      type="button" 
-                      onClick={nextStep}
-                      className="w-full bg-pink-500 hover:bg-pink-600 text-white h-12 rounded-lg font-medium"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 2: Select Categories */}
-              {currentStep === 2 && (
-                <motion.div
-                  key="step2"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800">Select Service Categories</h3>
-                  <p className="text-sm text-gray-600">Choose the types of services you're interested in</p>
-                  
-                  <FormField
-                    control={form.control}
-                    name="categories"
-                    render={() => (
-                      <FormItem>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {serviceCategories.map((category) => (
-                            <FormField
-                              key={category.title}
-                              control={form.control}
-                              name="categories"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem>
-                                    <FormControl>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const isSelected = field.value?.includes(category.title);
-                                          if (isSelected) {
-                                            field.onChange(
-                                              field.value?.filter(value => value !== category.title)
-                                            );
-                                          } else {
-                                            field.onChange([...field.value, category.title]);
-                                          }
-                                        }}
-                                        className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                                          field.value?.includes(category.title)
-                                            ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
-                                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                                        }`}
-                                      >
-                                        <div className="flex items-center space-x-3">
-                                          <span className="text-2xl">{category.emoji}</span>
-                                          <span className="font-medium">{category.title}</span>
-                                        </div>
-                                      </button>
-                                    </FormControl>
-                                  </FormItem>
-                                );
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-between pt-4">
-                    <Button type="button" variant="outline" onClick={prevStep}>
-                      <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
-                    <Button 
-                      type="button" 
-                      onClick={nextStep}
-                      disabled={watchedCategories.length === 0}
-                    >
-                      Next Step <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 3: Select Services */}
-              {currentStep === 3 && (
-                <motion.div
-                  key="step3"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800">Select Services</h3>
-                  <p className="text-sm text-gray-600">
-                    Services for {watchedGender} and unisex services
-                  </p>
-                  
-                  <FormField
-                    control={form.control}
-                    name="services"
-                    render={() => (
-                      <FormItem>
-                        <div className="space-y-6 max-h-96 overflow-y-auto">
-                          {groupedServices.map((group) => (
-                            <div key={group.category} className="space-y-3">
-                              <h4 className="text-md font-medium text-salon-purple flex items-center gap-2">
-                                <span>{serviceCategories.find(cat => cat.title === group.category)?.emoji}</span>
-                                {group.category}
-                              </h4>
-                              <div className="grid grid-cols-1 gap-3 ml-6">
-                                {group.services.map((service) => (
-                                  <FormField
-                                    key={service.id}
-                                    control={form.control}
-                                    name="services"
-                                    render={({ field }) => {
-                                      return (
-                                        <FormItem>
-                                          <FormControl>
-                                            <label className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                                              <Checkbox
-                                                checked={field.value?.includes(service.name)}
-                                                onCheckedChange={(checked) => {
-                                                  return checked
-                                                    ? field.onChange([...field.value, service.name])
-                                                    : field.onChange(
-                                                        field.value?.filter(
-                                                          (value) => value !== service.name
-                                                        )
-                                                      );
-                                                }}
-                                              />
-                                              <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                  <div className="font-medium">{service.name}</div>
-                                                  <div className="text-sm text-gray-500">
-                                                    {service.gender && service.gender !== 'unisex' && (
-                                                      <span className="capitalize">{service.gender}</span>
-                                                    )}
-                                                    {service.gender === 'unisex' && (
-                                                      <span>Unisex</span>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                                {service.price && service.duration_minutes && (
-                                                  <div className="text-sm text-gray-500">
-                                                    ₹{service.price} • {service.duration_minutes} min
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </label>
-                                          </FormControl>
-                                        </FormItem>
-                                      );
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-between pt-4">
-                    <Button type="button" variant="outline" onClick={prevStep}>
-                      <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-salon-purple hover:bg-salon-purple/90"
-                      disabled={loading || submitting || form.getValues('services').length === 0}
-                    >
-                      {loading || submitting ? "Booking..." : "Book Now"}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 4: Booking Confirmation */}
-              {currentStep === 4 && bookingConfirmed && confirmedBookingData && (
-                <motion.div
-                  key="step4"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  {/* Header with checkmark */}
-                  <div className="text-center space-y-3">
-                    <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto">
-                      <CheckCircle className="h-10 w-10 text-green-600" />
-                    </div>
+        {currentStep !== 4 ? (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <AnimatePresence mode="wait">
+                {/* Step 1: Contact Information & Gender */}
+                {currentStep === 1 && (
+                  <motion.div
+                    key="step1"
+                    variants={stepVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
-                      <p className="text-gray-600">Your appointment has been successfully scheduled.</p>
-                    </div>
-                  </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                      
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="full_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  disabled 
+                                  className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                  placeholder="Jane Doe"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                  {/* Selected Services Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
-                      <Scissors className="h-5 w-5" />
-                      <span>Selected Services</span>
-                    </div>
-                    <div className="space-y-3">
-                      {confirmedBookingData.services.map((serviceName, index) => {
-                        const service = services.find(s => s.name === serviceName);
-                        return (
-                          <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-gray-700">{serviceName}</span>
-                            {service?.price && (
-                              <span className="font-medium text-gray-900">₹{service.price}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        <FormField
+                          control={form.control}
+                          name="email_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  type="email" 
+                                  disabled 
+                                  className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                  placeholder="jane.doe@example.com"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                  {/* Booking Date & Time Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
-                      <Calendar className="h-5 w-5" />
-                      <span>Booking Date & Time</span>
-                    </div>
-                    <div className="text-gray-700">
-                      {format(confirmedBookingData.booking_date, "EEEE, MMMM d, yyyy, h:mm a")}
-                    </div>
-                  </div>
-
-                  {/* Total Amount Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
-                      <span>Total Amount</span>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-semibold text-gray-900">Total Paid</span>
-                        <span className="text-2xl font-bold text-salon-purple">₹{calculateTotalAmount()}</span>
+                        <FormField
+                          control={form.control}
+                          name="phone_number"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  disabled 
+                                  className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
+                                  placeholder="+91 98765 43210"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="space-y-3 pt-4">
-                    <Button
-                      onClick={() => {
-                        setOpen(false);
-                        onBookingSuccess?.();
-                        navigate('/my-bookings');
-                      }}
-                      className="w-full bg-salon-purple hover:bg-salon-purple/90 text-white py-3 rounded-lg font-medium"
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      View In My Bookings
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setOpen(false);
-                        form.reset();
-                      }}
-                      className="w-full border-salon-purple text-salon-purple hover:bg-salon-purple/10 py-3 rounded-lg font-medium"
-                    >
-                      Add to Calendar
-                    </Button>
-                  </div>
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-medium text-gray-900">
+                              Gender <span className="text-pink-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="flex gap-4 mt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('male')}
+                                  className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                                    field.value === 'male'
+                                      ? 'border-pink-500 bg-pink-50 text-pink-700'
+                                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                  }`}
+                                >
+                                  Male
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('female')}
+                                  className={`flex-1 py-3 px-4 rounded-lg border transition-all ${
+                                    field.value === 'female'
+                                      ? 'border-pink-500 bg-pink-50 text-pink-700'
+                                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                  }`}
+                                >
+                                  Female
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                  {/* Back to Homepage Link */}
-                  <div className="text-center pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpen(false);
-                        navigate('/');
-                      }}
-                      className="text-salon-purple hover:underline text-sm font-medium"
-                    >
-                      Back to Homepage
-                    </button>
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="booking_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-medium text-gray-900">
+                              Booking Date <span className="text-pink-500">*</span>
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full h-12 px-4 text-left font-normal border-gray-300 bg-white hover:bg-gray-50",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "dd/MM/yyyy")
+                                    ) : (
+                                      <span className="text-gray-500">mm/dd/yyyy</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date < new Date() || date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="pt-4">
+                      <Button 
+                        type="button" 
+                        onClick={nextStep}
+                        className="w-full bg-pink-500 hover:bg-pink-600 text-white h-12 rounded-lg font-medium"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 2: Select Categories */}
+                {currentStep === 2 && (
+                  <motion.div
+                    key="step2"
+                    variants={stepVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800">Select Service Categories</h3>
+                    <p className="text-sm text-gray-600">Choose the types of services you're interested in</p>
+                    
+                    <FormField
+                      control={form.control}
+                      name="categories"
+                      render={() => (
+                        <FormItem>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {serviceCategories.map((category) => (
+                              <FormField
+                                key={category.title}
+                                control={form.control}
+                                name="categories"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem>
+                                      <FormControl>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const isSelected = field.value?.includes(category.title);
+                                            if (isSelected) {
+                                              field.onChange(
+                                                field.value?.filter(value => value !== category.title)
+                                              );
+                                            } else {
+                                              field.onChange([...field.value, category.title]);
+                                            }
+                                          }}
+                                          className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                                            field.value?.includes(category.title)
+                                              ? 'border-salon-purple bg-salon-purple/10 text-salon-purple'
+                                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                                          }`}
+                                        >
+                                          <div className="flex items-center space-x-3">
+                                            <span className="text-2xl">{category.emoji}</span>
+                                            <span className="font-medium">{category.title}</span>
+                                          </div>
+                                        </button>
+                                      </FormControl>
+                                    </FormItem>
+                                  );
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-between pt-4">
+                      <Button type="button" variant="outline" onClick={prevStep}>
+                        <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={nextStep}
+                        disabled={watchedCategories.length === 0}
+                      >
+                        Next Step <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 3: Select Services */}
+                {currentStep === 3 && (
+                  <motion.div
+                    key="step3"
+                    variants={stepVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800">Select Services</h3>
+                    <p className="text-sm text-gray-600">
+                      Services for {watchedGender} and unisex services
+                    </p>
+                    
+                    <FormField
+                      control={form.control}
+                      name="services"
+                      render={() => (
+                        <FormItem>
+                          <div className="space-y-6 max-h-96 overflow-y-auto">
+                            {groupedServices.map((group) => (
+                              <div key={group.category} className="space-y-3">
+                                <h4 className="text-md font-medium text-salon-purple flex items-center gap-2">
+                                  <span>{serviceCategories.find(cat => cat.title === group.category)?.emoji}</span>
+                                  {group.category}
+                                </h4>
+                                <div className="grid grid-cols-1 gap-3 ml-6">
+                                  {group.services.map((service) => (
+                                    <FormField
+                                      key={service.id}
+                                      control={form.control}
+                                      name="services"
+                                      render={({ field }) => {
+                                        return (
+                                          <FormItem>
+                                            <FormControl>
+                                              <label className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
+                                                <Checkbox
+                                                  checked={field.value?.includes(service.name)}
+                                                  onCheckedChange={(checked) => {
+                                                    return checked
+                                                      ? field.onChange([...field.value, service.name])
+                                                      : field.onChange(
+                                                          field.value?.filter(
+                                                            (value) => value !== service.name
+                                                          )
+                                                        );
+                                                  }}
+                                                />
+                                                <div className="flex-1">
+                                                  <div className="flex items-center justify-between">
+                                                    <div className="font-medium">{service.name}</div>
+                                                    <div className="text-sm text-gray-500">
+                                                      {service.gender && service.gender !== 'unisex' && (
+                                                        <span className="capitalize">{service.gender}</span>
+                                                      )}
+                                                      {service.gender === 'unisex' && (
+                                                        <span>Unisex</span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  {service.price && service.duration_minutes && (
+                                                    <div className="text-sm text-gray-500">
+                                                      ₹{service.price} • {service.duration_minutes} min
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </label>
+                                            </FormControl>
+                                          </FormItem>
+                                        );
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-between pt-4">
+                      <Button type="button" variant="outline" onClick={prevStep}>
+                        <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-salon-purple hover:bg-salon-purple/90"
+                        disabled={loading || submitting || form.getValues('services').length === 0}
+                      >
+                        {loading || submitting ? "Booking..." : "Book Now"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </form>
+          </Form>
+        ) : (
+          /* Step 4: Booking Confirmation - Outside of form */
+          bookingConfirmed && confirmedBookingData && (
+            <motion.div
+              key="step4"
+              variants={stepVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {/* Header with checkmark */}
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto">
+                  <CheckCircle className="h-10 w-10 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
+                  <p className="text-gray-600">Your appointment has been successfully scheduled.</p>
+                </div>
+              </div>
+
+              {/* Selected Services Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                  <Scissors className="h-5 w-5" />
+                  <span>Selected Services</span>
+                </div>
+                <div className="space-y-3">
+                  {confirmedBookingData.services.map((serviceName, index) => {
+                    const service = services.find(s => s.name === serviceName);
+                    return (
+                      <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-700">{serviceName}</span>
+                        {service?.price && (
+                          <span className="font-medium text-gray-900">₹{service.price}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Booking Date & Time Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                  <Calendar className="h-5 w-5" />
+                  <span>Booking Date & Time</span>
+                </div>
+                <div className="text-gray-700">
+                  {format(confirmedBookingData.booking_date, "EEEE, MMMM d, yyyy, h:mm a")}
+                </div>
+              </div>
+
+              {/* Total Amount Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                  <span>Total Amount</span>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold text-gray-900">Total Paid</span>
+                    <span className="text-2xl font-bold text-salon-purple">₹{calculateTotalAmount()}</span>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </form>
-        </Form>
+                </div>
+              </div>
+
+              {/* Action Buttons - Now outside form */}
+              <div className="space-y-3 pt-4">
+                <Button
+                  onClick={() => {
+                    setOpen(false);
+                    onBookingSuccess?.();
+                    navigate('/my-bookings');
+                  }}
+                  className="w-full bg-salon-purple hover:bg-salon-purple/90 text-white py-3 rounded-lg font-medium"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  View In My Bookings
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setOpen(false);
+                    form.reset();
+                  }}
+                  className="w-full border-salon-purple text-salon-purple hover:bg-salon-purple/10 py-3 rounded-lg font-medium"
+                >
+                  Add to Calendar
+                </Button>
+              </div>
+
+              {/* Back to Homepage Link */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/');
+                  }}
+                  className="text-salon-purple hover:underline text-sm font-medium"
+                >
+                  Back to Homepage
+                </button>
+              </div>
+            </motion.div>
+          )
+        )}
       </DialogContent>
     </Dialog>
   );
