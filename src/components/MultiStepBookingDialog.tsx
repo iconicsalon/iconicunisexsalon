@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -82,6 +81,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // New state to track form submission
   const [services, setServices] = useState<Service[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -112,6 +112,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       setCurrentStep(1);
       setBookingConfirmed(false);
       setConfirmedBookingData(null);
+      setSubmitting(false); // Reset submitting state when dialog opens
       form.reset({
         full_name: '',
         email_id: '',
@@ -249,6 +250,12 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   };
 
   const onSubmit = async (data: BookingFormData) => {
+    // Prevent multiple submissions
+    if (submitting) {
+      console.log('Form submission already in progress, ignoring duplicate submission');
+      return;
+    }
+
     if (!userProfile) {
       toast({
         title: "Error",
@@ -258,7 +265,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       return;
     }
 
+    setSubmitting(true); // Set submitting state to prevent duplicates
     setLoading(true);
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -285,6 +294,14 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         );
       });
 
+      console.log('Submitting booking with data:', {
+        user_id: user.id,
+        booking_date: format(data.booking_date, 'yyyy-MM-dd'),
+        services: data.services,
+        category_list: categoriesWithSelectedServices,
+        total_amount: totalAmount,
+      });
+
       const { error } = await supabase
         .from('bookings')
         .insert({
@@ -307,6 +324,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         return;
       }
 
+      console.log('Booking created successfully');
       setConfirmedBookingData(data);
       setBookingConfirmed(true);
       setCurrentStep(4);
@@ -319,6 +337,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       });
     } finally {
       setLoading(false);
+      setSubmitting(false); // Reset submitting state
     }
   };
 
@@ -736,9 +755,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                     <Button
                       type="submit"
                       className="bg-salon-purple hover:bg-salon-purple/90"
-                      disabled={loading || form.getValues('services').length === 0}
+                      disabled={loading || submitting || form.getValues('services').length === 0}
                     >
-                      {loading ? "Booking..." : "Book Now"}
+                      {loading || submitting ? "Booking..." : "Book Now"}
                     </Button>
                   </div>
                 </motion.div>
