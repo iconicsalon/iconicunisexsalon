@@ -61,9 +61,9 @@ const Index = () => {
                 onClick={handleSignIn}
                 disabled={isLoading}
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-salon-purple transition-all duration-300 px-8 py-4 rounded-lg font-semibold text-lg shadow-lg min-w-[200px]"
+                className="border-2 border-white text-white hover:bg-white hover:text-salon-purple transition-all duration-300 px-6 py-3 rounded-lg font-medium text-base shadow-lg bg-white/10 backdrop-blur-sm"
               >
-                {user ? 'Already Signed In' : (isLoading ? 'Signing in...' : 'Sign in with Google')}
+                {user ? 'Signed In' : (isLoading ? 'Signing in...' : 'Sign in')}
               </Button>
             </div>
           </div>
