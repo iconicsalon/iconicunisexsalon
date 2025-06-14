@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle, Calendar, Scissors } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
@@ -717,66 +717,76 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                   animate="animate"
                   exit="exit"
                   transition={{ duration: 0.3 }}
-                  className="space-y-6 text-center"
+                  className="space-y-6"
                 >
-                  <div className="flex flex-col items-center space-y-4">
-                    <CheckCircle className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold text-green-600">Booking Confirmed!</h3>
-                    <p className="text-gray-600">Your appointment has been successfully booked.</p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-6 space-y-4 text-left">
-                    <h4 className="font-semibold text-lg">Booking Details</h4>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Date:</span>
-                        <span className="font-medium">
-                          {format(confirmedBookingData.booking_date, "PPP")}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Gender:</span>
-                        <span className="font-medium capitalize">{confirmedBookingData.gender}</span>
-                      </div>
+                  {/* Header with checkmark */}
+                  <div className="text-center space-y-3">
+                    <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto">
+                      <CheckCircle className="h-10 w-10 text-green-600" />
                     </div>
-
-                    <div className="space-y-2">
-                      <span className="text-gray-600 font-medium">Selected Services:</span>
-                      <div className="space-y-1">
-                        {confirmedBookingData.services.map((serviceName, index) => {
-                          const service = services.find(s => s.name === serviceName);
-                          return (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{serviceName}</span>
-                              {service?.price && (
-                                <span className="font-medium">₹{service.price}</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total Amount:</span>
-                        <span className="text-salon-purple">₹{calculateTotalAmount()}</span>
-                      </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
+                      <p className="text-gray-600">Your appointment has been successfully scheduled.</p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-3">
+                  {/* Selected Services Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                      <Scissors className="h-5 w-5" />
+                      <span>Selected Services</span>
+                    </div>
+                    <div className="space-y-3">
+                      {confirmedBookingData.services.map((serviceName, index) => {
+                        const service = services.find(s => s.name === serviceName);
+                        return (
+                          <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-gray-700">{serviceName}</span>
+                            {service?.price && (
+                              <span className="font-medium text-gray-900">₹{service.price}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Booking Date & Time Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                      <Calendar className="h-5 w-5" />
+                      <span>Booking Date & Time</span>
+                    </div>
+                    <div className="text-gray-700">
+                      {format(confirmedBookingData.booking_date, "EEEE, MMMM d, yyyy, h:mm a")}
+                    </div>
+                  </div>
+
+                  {/* Total Amount Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-salon-purple font-semibold">
+                      <span>Total Amount</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold text-gray-900">Total Paid</span>
+                        <span className="text-2xl font-bold text-salon-purple">₹{calculateTotalAmount()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3 pt-4">
                     <Button
                       onClick={() => {
                         setOpen(false);
                         onBookingSuccess?.();
                         navigate('/my-bookings');
                       }}
-                      className="bg-salon-purple hover:bg-salon-purple/90"
+                      className="w-full bg-salon-purple hover:bg-salon-purple/90 text-white py-3 rounded-lg font-medium"
                     >
-                      View My Bookings
+                      <Calendar className="h-4 w-4 mr-2" />
+                      View In My Bookings
                     </Button>
                     <Button
                       variant="outline"
@@ -784,9 +794,24 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                         setOpen(false);
                         form.reset();
                       }}
+                      className="w-full border-salon-purple text-salon-purple hover:bg-salon-purple/10 py-3 rounded-lg font-medium"
                     >
-                      Close
+                      Add to Calendar
                     </Button>
+                  </div>
+
+                  {/* Back to Homepage Link */}
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate('/');
+                      }}
+                      className="text-salon-purple hover:underline text-sm font-medium"
+                    >
+                      Back to Homepage
+                    </button>
                   </div>
                 </motion.div>
               )}
