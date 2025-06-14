@@ -10,34 +10,23 @@ import {
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookingFormData } from '@/hooks/useBookingForm';
-
-interface Service {
-  id: string;
-  name: string;
-  category: string;
-  price: number | null;
-  duration_minutes: number | null;
-}
-
-const serviceCategories = [
-  { title: 'Haircut & Styling', emoji: '✂️' },
-  { title: 'Hair Coloring / Treatment', emoji: '🎨' },
-  { title: 'Facial & Skincare', emoji: '💆‍♀️' },
-  { title: 'Waxing', emoji: '🧖‍♀️' },
-  { title: 'Manicure & Pedicure', emoji: '💅' },
-  { title: 'Makeup Services', emoji: '💄' },
-  { title: 'Massage & Relaxation', emoji: '🧘' },
-];
+import { useServices } from '@/hooks/useServices';
 
 interface ServiceSelectionProps {
   form: UseFormReturn<BookingFormData>;
-  services: Service[];
 }
 
-const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form, services }) => {
-  const groupedServices = serviceCategories.map(category => ({
+const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form }) => {
+  const { services, categories, loading } = useServices();
+
+  if (loading) {
+    return <div className="text-center py-4">Loading services...</div>;
+  }
+
+  // Group services by category
+  const groupedServices = categories.map(category => ({
     ...category,
-    services: services.filter(service => service.category === category.title),
+    services: services.filter(service => service.category_id === category.id),
   }));
 
   return (
@@ -53,10 +42,10 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form, services }) =
           </div>
           <div className="space-y-6">
             {groupedServices.map((category) => (
-              <div key={category.title} className="space-y-3">
+              <div key={category.id} className="space-y-3">
                 <h4 className="text-md font-medium text-salon-purple flex items-center gap-2">
-                  <span>{category.emoji}</span>
-                  {category.title}
+                  <span>{category.icon}</span>
+                  {category.name}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-6">
                   {category.services.map((service) => (
@@ -88,6 +77,11 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({ form, services }) =
                               <FormLabel className="text-sm font-normal">
                                 {service.name}
                               </FormLabel>
+                              {service.description && (
+                                <p className="text-xs text-gray-400">
+                                  {service.description}
+                                </p>
+                              )}
                               {service.price && (
                                 <p className="text-xs text-gray-500">
                                   ₹{service.price} • {service.duration_minutes} min

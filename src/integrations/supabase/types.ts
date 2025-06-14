@@ -84,32 +84,82 @@ export type Database = {
         }
         Relationships: []
       }
-      services: {
+      service_categories: {
         Row: {
-          category: string
           created_at: string | null
-          duration_minutes: number | null
+          icon: string | null
           id: string
           name: string
-          price: number | null
+          sort_order: number | null
         }
         Insert: {
-          category: string
           created_at?: string | null
-          duration_minutes?: number | null
+          icon?: string | null
           id?: string
           name: string
-          price?: number | null
+          sort_order?: number | null
         }
         Update: {
-          category?: string
           created_at?: string | null
-          duration_minutes?: number | null
+          icon?: string | null
           id?: string
           name?: string
-          price?: number | null
+          sort_order?: number | null
         }
         Relationships: []
+      }
+      services: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          gender: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          price: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          price?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          price?: number | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
