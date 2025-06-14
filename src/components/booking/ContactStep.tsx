@@ -40,7 +40,18 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
   const handleNext = async () => {
     console.log('ContactStep handleNext called');
     console.log('Current form values:', form.getValues());
-    await onNext();
+    
+    // Trigger validation for step 1 fields
+    const isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
+    console.log('Step 1 validation result:', isValid);
+    console.log('Form errors:', form.formState.errors);
+    
+    if (isValid) {
+      console.log('Validation passed, calling onNext');
+      onNext();
+    } else {
+      console.log('Validation failed, not proceeding');
+    }
   };
 
   return (
@@ -65,8 +76,8 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.full_name || ''}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
+                    readOnly
+                    className="bg-gray-100 border border-gray-300 text-gray-700 h-12 px-4 rounded-lg cursor-not-allowed" 
                     placeholder="Your Name"
                   />
                 </FormControl>
@@ -84,9 +95,9 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.email_id || ''}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    readOnly
                     type="email" 
-                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
+                    className="bg-gray-100 border border-gray-300 text-gray-700 h-12 px-4 rounded-lg cursor-not-allowed" 
                     placeholder="your.email@example.com"
                   />
                 </FormControl>
@@ -104,8 +115,8 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                   <Input 
                     {...field} 
                     value={field.value || profile?.phone_number || ''}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-700 h-12 px-4 rounded-lg" 
+                    readOnly
+                    className="bg-gray-100 border border-gray-300 text-gray-700 h-12 px-4 rounded-lg cursor-not-allowed" 
                     placeholder="+91 98765 43210"
                   />
                 </FormControl>
@@ -194,6 +205,7 @@ const ContactStep: React.FC<ContactStepProps> = ({ form, onNext }) => {
                       date < new Date() || date < new Date("1900-01-01")
                     }
                     initialFocus
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
