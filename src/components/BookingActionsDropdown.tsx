@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreVertical, X, Edit, Calendar } from 'lucide-react';
 import {
   DropdownMenu,
@@ -37,6 +37,11 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
 
+  // Reset dropdown state when booking changes
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [booking.id, booking.updated_at]);
+
   const handleCancelBooking = async () => {
     setIsLoading(true);
     try {
@@ -71,7 +76,11 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
   };
 
   const handleBookingUpdate = () => {
+    // Reset all dialog states
+    setShowEditDialog(false);
+    setShowRescheduleDialog(false);
     setDropdownOpen(false);
+    // Trigger the parent update
     onBookingUpdate();
   };
 
