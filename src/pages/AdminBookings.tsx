@@ -250,10 +250,20 @@ const AdminBookings = () => {
     try {
       setIsExporting(true);
       
-      // Use current filtered bookings for export
+      // Use current filtered bookings for export with proper type mapping
       const bookingsForExport = filteredBookings.map(booking => ({
-        ...booking,
-        customer_email: booking.customer_email || 'N/A'
+        id: booking.id,
+        customer_name: booking.customer_name || 'Unknown',
+        customer_phone: booking.customer_phone || 'N/A',
+        customer_email: booking.customer_email || 'N/A',
+        booking_date: booking.booking_date,
+        created_at: booking.created_at,
+        services: booking.services,
+        status: booking.status,
+        total_amount: booking.total_amount,
+        amount_paid: booking.amount_paid,
+        time_slot: undefined, // Add if available in your booking interface
+        category_list: undefined // Add if available in your booking interface
       }));
 
       // Calculate filtered stats
