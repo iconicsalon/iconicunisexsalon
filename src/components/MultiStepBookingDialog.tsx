@@ -90,7 +90,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false); // New state to track form submission
+  const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -116,6 +116,16 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
   const watchedGender = form.watch('gender');
   const watchedBookingDate = form.watch('booking_date');
 
+  // Auto-select closest available time slot when date changes
+  useEffect(() => {
+    if (watchedBookingDate) {
+      const availableSlots = getAvailableTimeSlots(watchedBookingDate);
+      if (availableSlots.length > 0 && !form.getValues('time_slot')) {
+        form.setValue('time_slot', availableSlots[0].value, { shouldValidate: false });
+      }
+    }
+  }, [watchedBookingDate, form]);
+
   useEffect(() => {
     if (open) {
       fetchUserProfile();
@@ -123,7 +133,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       setCurrentStep(1);
       setBookingConfirmed(false);
       setConfirmedBookingData(null);
-      setSubmitting(false); // Reset submitting state when dialog opens
+      setSubmitting(false);
       form.reset({
         full_name: '',
         email_id: '',
@@ -187,12 +197,16 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
 
       if (profile) {
         setUserProfile(profile);
+        const initialBookingDate = new Date();
+        const availableSlots = getAvailableTimeSlots(initialBookingDate);
+        const initialTimeSlot = availableSlots.length > 0 ? availableSlots[0].value : '';
+        
         form.reset({
           full_name: profile.full_name,
           email_id: profile.email_id,
           phone_number: profile.phone_number || '',
-          booking_date: new Date(),
-          time_slot: '',
+          booking_date: initialBookingDate,
+          time_slot: initialTimeSlot,
           gender: (profile.gender as 'male' | 'female') || 'female',
           categories: [],
           services: [],
@@ -278,7 +292,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       return;
     }
 
-    setSubmitting(true); // Set submitting state to prevent duplicates
+    setSubmitting(true);
     setLoading(true);
     
     try {
@@ -323,7 +337,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           booking_date: format(data.booking_date, 'yyyy-MM-dd'),
           time_slot: data.time_slot,
           services: data.services,
-          category_list: categoriesWithSelectedServices, // Only save categories with selected services
+          category_list: categoriesWithSelectedServices,
           total_amount: totalAmount,
           amount_paid: totalAmount,
           status: 'pending',
@@ -352,7 +366,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       });
     } finally {
       setLoading(false);
-      setSubmitting(false); // Reset submitting state
+      setSubmitting(false);
     }
   };
 
@@ -542,7 +556,8 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                       />
                     </div>
 
-                    <div>
+                    {/* Date and Time Slot - Side by side */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="booking_date"
@@ -586,9 +601,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                           </FormItem>
                         )}
                       />
-                    </div>
 
-                    <div>
                       <FormField
                         control={form.control}
                         name="time_slot"
