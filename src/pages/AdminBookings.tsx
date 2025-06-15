@@ -14,9 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Calendar, Filter, Check, X } from 'lucide-react';
+import { Search, Calendar, Filter, Check, X, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Booking {
@@ -217,6 +223,24 @@ const AdminBookings = () => {
     setTempAmount('');
   };
 
+  const getAvailableActions = (booking: Booking) => {
+    const actions = [];
+    
+    if (booking.status === 'pending') {
+      actions.push(
+        { label: 'Accept', action: () => updateBookingStatus(booking.id, 'accept'), variant: 'default' },
+        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancel'), variant: 'destructive' }
+      );
+    } else if (booking.status === 'accept') {
+      actions.push(
+        { label: 'Mark as Completed', action: () => updateBookingStatus(booking.id, 'completed'), variant: 'default' },
+        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancel'), variant: 'destructive' }
+      );
+    }
+    
+    return actions;
+  };
+
   useEffect(() => {
     fetchBookings();
   }, []);
@@ -391,30 +415,9 @@ const AdminBookings = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={booking.status || 'pending'}
-                                onValueChange={(value) => updateBookingStatus(booking.id, value)}
-                                disabled={updatingStatus === booking.id}
-                              >
-                                <SelectTrigger className="w-32">
-                                  <SelectValue>
-                                    <Badge className={getStatusColor(booking.status || 'pending')}>
-                                      {updatingStatus === booking.id ? 'Updating...' : getDisplayStatus(booking.status || 'pending')}
-                                    </Badge>
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                                  <SelectItem value="pending">
-                                    <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                                  </SelectItem>
-                                  <SelectItem value="accept">
-                                    <Badge className="bg-green-100 text-green-800">Accept</Badge>
-                                  </SelectItem>
-                                  <SelectItem value="cancel">
-                                    <Badge className="bg-red-100 text-red-800">Cancel</Badge>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <Badge className={getStatusColor(booking.status || 'pending')}>
+                                {getDisplayStatus(booking.status || 'pending')}
+                              </Badge>
                             </TableCell>
                             <TableCell>
                               {booking.total_amount ? `₹${booking.total_amount}` : 'N/A'}
@@ -457,28 +460,34 @@ const AdminBookings = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex gap-2">
-                                {booking.status === 'pending' && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => updateBookingStatus(booking.id, 'accept')}
-                                      className="bg-green-600 hover:bg-green-700"
-                                      disabled={updatingStatus === booking.id}
-                                    >
-                                      {updatingStatus === booking.id ? 'Updating...' : 'Accept'}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => updateBookingStatus(booking.id, 'cancel')}
-                                      disabled={updatingStatus === booking.id}
-                                    >
-                                      {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                    <Eye className="h-4 w-4" />
+                                    View
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
+                                  {getAvailableActions(booking).length > 0 ? (
+                                    getAvailableActions(booking).map((actionItem, index) => (
+                                      <DropdownMenuItem
+                                        key={index}
+                                        onClick={actionItem.action}
+                                        disabled={updatingStatus === booking.id}
+                                        className={`cursor-pointer hover:bg-gray-50 px-3 py-2 ${
+                                          actionItem.variant === 'destructive' ? 'text-red-600 hover:bg-red-50' : ''
+                                        }`}
+                                      >
+                                        {updatingStatus === booking.id ? 'Updating...' : actionItem.label}
+                                      </DropdownMenuItem>
+                                    ))
+                                  ) : (
+                                    <DropdownMenuItem disabled className="px-3 py-2 text-gray-500">
+                                      No actions available
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))
