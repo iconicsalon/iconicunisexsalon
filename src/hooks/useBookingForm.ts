@@ -41,6 +41,20 @@ export const generateTimeSlots = () => {
   return slots;
 };
 
+// Helper function to convert 12-hour time to 24-hour format for comparison
+const convertTo24Hour = (timeStr: string) => {
+  const [time, period] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+  
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return hours + (minutes / 60);
+};
+
 // Filter out past time slots for today
 export const getAvailableTimeSlots = (selectedDate: Date) => {
   const allSlots = generateTimeSlots();
@@ -51,14 +65,15 @@ export const getAvailableTimeSlots = (selectedDate: Date) => {
     return allSlots;
   }
   
-  const currentHour = today.getHours();
+  const currentHour = today.getHours() + (today.getMinutes() / 60);
   
   return allSlots.filter(slot => {
-    const startHour = parseInt(slot.value.split(':')[0]);
-    const isPM = slot.value.includes('PM') && !slot.value.startsWith('12');
-    const adjustedHour = isPM ? startHour + 12 : startHour;
+    // Extract the start time from the slot (e.g., "9:00 AM" from "9:00 AM - 11:00 AM")
+    const startTime = slot.value.split(' - ')[0];
+    const slotStartHour = convertTo24Hour(startTime);
     
-    return adjustedHour > currentHour;
+    // Only show slots that start after the current time
+    return slotStartHour > currentHour;
   });
 };
 
