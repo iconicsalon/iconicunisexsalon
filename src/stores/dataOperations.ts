@@ -42,7 +42,7 @@ export const fetchBookings = async (userId: string): Promise<Booking[]> => {
       .from('bookings')
       .select('*')
       .eq('user_id', userId)
-      .order('booking_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     
