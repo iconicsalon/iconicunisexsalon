@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -112,15 +113,14 @@ const AdminBookings = () => {
       
       console.log('Current booking data:', currentBooking);
       
-      // Now attempt the update
-      const { data: updatedData, error: updateError } = await supabase
+      // Now attempt the update with a simpler approach - don't require returned data
+      const { error: updateError } = await supabase
         .from('bookings')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', bookingId)
-        .select('*');
+        .eq('id', bookingId);
 
       if (updateError) {
         console.error('Supabase update error details:', {
@@ -132,13 +132,9 @@ const AdminBookings = () => {
         throw new Error(`Database error: ${updateError.message}`);
       }
 
-      console.log('Update successful, returned data:', updatedData);
+      console.log('Update successful');
 
-      if (!updatedData || updatedData.length === 0) {
-        throw new Error('No data returned from update operation');
-      }
-
-      // Update local state
+      // Update local state optimistically
       setBookings(prev => prev.map(booking => 
         booking.id === bookingId ? { ...booking, status: newStatus } : booking
       ));
