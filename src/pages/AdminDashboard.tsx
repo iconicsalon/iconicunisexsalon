@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -17,9 +16,15 @@ import {
   Filter,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  exportBookingsToExcel, 
+  generateMonthlyFilename, 
+  generateYearlyFilename 
+} from '@/utils/excelExport';
 
 interface DashboardStats {
   totalBookings: number;
@@ -63,6 +68,7 @@ const AdminDashboard = () => {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   const fetchDashboardData = async () => {
@@ -199,6 +205,146 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleMonthlyExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      // Get current month start and end
+      const monthStart = startOfMonth(new Date(selectedMonth));
+      const monthEnd = endOfMonth(new Date(selectedMonth));
+
+      // Fetch monthly bookings with customer data
+      const { data: monthlyBookingsData, error: monthlyError } = await supabase
+        .from('bookings')
+        .select('*')
+        .gte('booking_date', format(monthStart, 'yyyy-MM-dd'))
+        .lte('booking_date', format(monthEnd, 'yyyy-MM-dd'))
+        .order('booking_date', { ascending: false });
+
+      if (monthlyError) throw monthlyError;
+
+      // Get customer profiles for each booking
+      const bookingsWithProfiles = [];
+      for (const booking of monthlyBookingsData || []) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, phone_number, email_id')
+          .eq('id', booking.user_id)
+          .single();
+
+        bookingsWithProfiles.push({
+          ...booking,
+          customer_name: profile?.full_name || 'Unknown Customer',
+          customer_phone: profile?.phone_number || 'N/A',
+          customer_email: profile?.email_id || 'N/A'
+        });
+      }
+
+      // Calculate stats for export
+      const exportStats = {
+        totalBookings: bookingsWithProfiles.length,
+        totalRevenue: stats.monthlyRevenue,
+        totalAmountPaid: stats.monthlyAmountPaid,
+        completedBookings: bookingsWithProfiles.filter(b => b.status === 'completed').length,
+        pendingBookings: bookingsWithProfiles.filter(b => b.status === 'pending').length,
+        acceptedBookings: bookingsWithProfiles.filter(b => b.status === 'accept').length,
+        cancelledBookings: bookingsWithProfiles.filter(b => b.status === 'cancel').length,
+      };
+
+      const date = new Date(selectedMonth);
+      const filename = generateMonthlyFilename(date.getFullYear(), date.getMonth() + 1);
+      
+      await exportBookingsToExcel(bookingsWithProfiles, exportStats, filename, 'monthly');
+      
+      toast({
+        title: "Export Successful",
+        description: `Monthly report exported as ${filename}`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting monthly data:', error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export monthly data: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleYearlyExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      const currentYear = new Date(selectedMonth).getFullYear();
+      const yearStart = new Date(currentYear, 0, 1);
+      const yearEnd = new Date(currentYear, 11, 31);
+
+      // Fetch yearly bookings
+      const { data: yearlyBookingsData, error: yearlyError } = await supabase
+        .from('bookings')
+        .select('*')
+        .gte('booking_date', format(yearStart, 'yyyy-MM-dd'))
+        .lte('booking_date', format(yearEnd, 'yyyy-MM-dd'))
+        .order('booking_date', { ascending: false });
+
+      if (yearlyError) throw yearlyError;
+
+      // Get customer profiles for each booking
+      const bookingsWithProfiles = [];
+      for (const booking of yearlyBookingsData || []) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, phone_number, email_id')
+          .eq('id', booking.user_id)
+          .single();
+
+        bookingsWithProfiles.push({
+          ...booking,
+          customer_name: profile?.full_name || 'Unknown Customer',
+          customer_phone: profile?.phone_number || 'N/A',
+          customer_email: profile?.email_id || 'N/A'
+        });
+      }
+
+      // Calculate yearly stats
+      let yearlyRevenue = 0;
+      let yearlyAmountPaid = 0;
+      bookingsWithProfiles.forEach(booking => {
+        if (booking.total_amount) yearlyRevenue += Number(booking.total_amount);
+        if (booking.amount_paid) yearlyAmountPaid += Number(booking.amount_paid);
+      });
+
+      const exportStats = {
+        totalBookings: bookingsWithProfiles.length,
+        totalRevenue: yearlyRevenue,
+        totalAmountPaid: yearlyAmountPaid,
+        completedBookings: bookingsWithProfiles.filter(b => b.status === 'completed').length,
+        pendingBookings: bookingsWithProfiles.filter(b => b.status === 'pending').length,
+        acceptedBookings: bookingsWithProfiles.filter(b => b.status === 'accept').length,
+        cancelledBookings: bookingsWithProfiles.filter(b => b.status === 'cancel').length,
+      };
+
+      const filename = generateYearlyFilename(currentYear);
+      
+      await exportBookingsToExcel(bookingsWithProfiles, exportStats, filename, 'yearly');
+      
+      toast({
+        title: "Export Successful",
+        description: `Yearly report exported as ${filename}`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting yearly data:', error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export yearly data: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, [selectedMonth]);
@@ -247,9 +393,29 @@ const AdminDashboard = () => {
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-gray-600 mt-2">Overview of your salon's performance</p>
               </div>
-              <Button onClick={fetchDashboardData} disabled={isLoading} variant="outline">
-                {isLoading ? 'Refreshing...' : 'Refresh Data'}
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={handleMonthlyExport}
+                  disabled={isExporting || isLoading}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isExporting ? 'Exporting...' : 'Export Monthly'}
+                </Button>
+                <Button 
+                  onClick={handleYearlyExport}
+                  disabled={isExporting || isLoading}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isExporting ? 'Exporting...' : 'Export Yearly'}
+                </Button>
+                <Button onClick={fetchDashboardData} disabled={isLoading} variant="outline">
+                  {isLoading ? 'Refreshing...' : 'Refresh Data'}
+                </Button>
+              </div>
             </div>
           </div>
 

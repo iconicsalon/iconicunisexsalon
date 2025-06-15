@@ -22,8 +22,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Calendar, Filter, Check, X, Eye } from 'lucide-react';
+import { Search, Calendar, Filter, Check, X, Eye, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  exportBookingsToExcel, 
+  generateFilteredFilename 
+} from '@/utils/excelExport';
 
 interface Booking {
   id: string;
@@ -49,6 +53,7 @@ const AdminBookings = () => {
   const [editingAmountId, setEditingAmountId] = useState<string | null>(null);
   const [tempAmount, setTempAmount] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   const fetchBookings = async () => {
@@ -241,6 +246,54 @@ const AdminBookings = () => {
     return actions;
   };
 
+  const handleFilteredExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      // Use current filtered bookings for export
+      const bookingsForExport = filteredBookings.map(booking => ({
+        ...booking,
+        customer_email: booking.customer_email || 'N/A'
+      }));
+
+      // Calculate filtered stats
+      let totalRevenue = 0;
+      let totalAmountPaid = 0;
+      bookingsForExport.forEach(booking => {
+        if (booking.total_amount) totalRevenue += Number(booking.total_amount);
+        if (booking.amount_paid) totalAmountPaid += Number(booking.amount_paid);
+      });
+
+      const exportStats = {
+        totalBookings: bookingsForExport.length,
+        totalRevenue,
+        totalAmountPaid,
+        completedBookings: bookingsForExport.filter(b => b.status === 'completed').length,
+        pendingBookings: bookingsForExport.filter(b => b.status === 'pending').length,
+        acceptedBookings: bookingsForExport.filter(b => b.status === 'accept').length,
+        cancelledBookings: bookingsForExport.filter(b => b.status === 'cancel').length,
+      };
+
+      const filename = generateFilteredFilename();
+      
+      await exportBookingsToExcel(bookingsForExport, exportStats, filename, 'filtered');
+      
+      toast({
+        title: "Export Successful",
+        description: `Filtered bookings exported as ${filename}`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting filtered data:', error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export filtered data: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   useEffect(() => {
     fetchBookings();
   }, []);
@@ -319,8 +372,21 @@ const AdminBookings = () => {
         
         <main className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">All Bookings</h1>
-            <p className="text-gray-600 mt-2">Manage and view all customer bookings</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">All Bookings</h1>
+                <p className="text-gray-600 mt-2">Manage and view all customer bookings</p>
+              </div>
+              <Button 
+                onClick={handleFilteredExport}
+                disabled={isExporting || isLoading || filteredBookings.length === 0}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? 'Exporting...' : 'Export to Excel'}
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -499,6 +565,11 @@ const AdminBookings = () => {
               
               <div className="mt-4 text-sm text-gray-500">
                 Showing {filteredBookings.length} of {bookings.length} bookings
+                {filteredBookings.length > 0 && (
+                  <span className="ml-4 text-blue-600">
+                    Click "Export to Excel" to download current view
+                  </span>
+                )}
               </div>
             </CardContent>
           </Card>
