@@ -42,6 +42,7 @@ const AdminBookings = () => {
   const [monthFilter, setMonthFilter] = useState('all');
   const [editingAmountId, setEditingAmountId] = useState<string | null>(null);
   const [tempAmount, setTempAmount] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchBookings = async () => {
@@ -89,24 +90,53 @@ const AdminBookings = () => {
   };
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    console.log('=== BOOKING STATUS UPDATE DEBUG ===');
+    console.log('Booking ID:', bookingId);
+    console.log('New Status:', newStatus);
+    console.log('Current user session:', await supabase.auth.getSession());
+    
+    setUpdatingStatus(bookingId);
+    
     try {
-      console.log('Updating booking status:', bookingId, 'to:', newStatus);
+      // First, let's check the current booking data
+      const { data: currentBooking, error: fetchError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching current booking:', fetchError);
+        throw new Error(`Failed to fetch booking: ${fetchError.message}`);
+      }
       
-      const { data, error } = await supabase
+      console.log('Current booking data:', currentBooking);
+      
+      // Now attempt the update
+      const { data: updatedData, error: updateError } = await supabase
         .from('bookings')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId)
-        .select();
+        .select('*');
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (updateError) {
+        console.error('Supabase update error details:', {
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code
+        });
+        throw new Error(`Database error: ${updateError.message}`);
       }
 
-      console.log('Update successful:', data);
+      console.log('Update successful, returned data:', updatedData);
+
+      if (!updatedData || updatedData.length === 0) {
+        throw new Error('No data returned from update operation');
+      }
 
       // Update local state
       setBookings(prev => prev.map(booking => 
@@ -120,13 +150,21 @@ const AdminBookings = () => {
         title: "Success",
         description: `Booking status updated to ${newStatus}.`,
       });
-    } catch (error) {
-      console.error('Error updating booking status:', error);
+      
+      console.log('Status update completed successfully');
+    } catch (error: any) {
+      console.error('=== STATUS UPDATE ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
       toast({
         title: "Error",
-        description: "Failed to update booking status. Please try again.",
+        description: `Failed to update booking status: ${error.message}`,
         variant: "destructive",
       });
+    } finally {
+      setUpdatingStatus(null);
     }
   };
 
@@ -365,11 +403,12 @@ const AdminBookings = () => {
                               <Select
                                 value={booking.status || 'pending'}
                                 onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                                disabled={updatingStatus === booking.id}
                               >
                                 <SelectTrigger className="w-32">
                                   <SelectValue>
                                     <Badge className={getStatusColor(booking.status || 'pending')}>
-                                      {getDisplayStatus(booking.status || 'pending')}
+                                      {updatingStatus === booking.id ? 'Updating...' : getDisplayStatus(booking.status || 'pending')}
                                     </Badge>
                                   </SelectValue>
                                 </SelectTrigger>
@@ -434,15 +473,17 @@ const AdminBookings = () => {
                                       size="sm"
                                       onClick={() => updateBookingStatus(booking.id, 'accept')}
                                       className="bg-green-600 hover:bg-green-700"
+                                      disabled={updatingStatus === booking.id}
                                     >
-                                      Accept
+                                      {updatingStatus === booking.id ? 'Updating...' : 'Accept'}
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="destructive"
                                       onClick={() => updateBookingStatus(booking.id, 'cancel')}
+                                      disabled={updatingStatus === booking.id}
                                     >
-                                      Cancel
+                                      {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
                                     </Button>
                                   </>
                                 )}
