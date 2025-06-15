@@ -47,17 +47,12 @@ const AdminCustomers = () => {
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      console.log('=== ADMIN CUSTOMERS FETCH DEBUG ===');
       
-      // Use service_role key or ensure admin can bypass RLS
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('Supabase query result:', { data, error });
-      console.log('Number of profiles fetched:', data?.length || 0);
-      
       if (error) {
         console.error('Supabase error:', error);
         toast({
@@ -69,8 +64,6 @@ const AdminCustomers = () => {
       }
 
       const customerData = data || [];
-      console.log('All customer data:', customerData);
-      
       setCustomers(customerData);
       setFilteredCustomers(customerData);
       
@@ -134,7 +127,6 @@ const AdminCustomers = () => {
   };
 
   const handleRefresh = () => {
-    console.log('Manual refresh triggered');
     fetchCustomers();
   };
 
