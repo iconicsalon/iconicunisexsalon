@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -46,35 +47,19 @@ const AdminCustomers = () => {
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      console.log('=== FETCHING CUSTOMERS DEBUG ===');
-      console.log('Starting to fetch all customers from profiles table...');
+      console.log('=== ADMIN CUSTOMERS FETCH DEBUG ===');
       
-      // First, let's check if we can connect to Supabase
-      const { data: testConnection, error: connectionError } = await supabase
+      // Use service_role key or ensure admin can bypass RLS
+      const { data, error } = await supabase
         .from('profiles')
-        .select('count(*)', { count: 'exact' });
-        
-      console.log('Connection test result:', { testConnection, connectionError });
-      
-      // Now fetch all customers
-      const { data, error, count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
+        .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('=== SUPABASE QUERY RESULTS ===');
-      console.log('Raw data received:', data);
-      console.log('Error (if any):', error);
-      console.log('Count from query:', count);
-      console.log('Data array length:', data?.length);
+      console.log('Supabase query result:', { data, error });
+      console.log('Number of profiles fetched:', data?.length || 0);
       
       if (error) {
-        console.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error('Supabase error:', error);
         toast({
           title: 'Database Error',
           description: `Failed to fetch customers: ${error.message}`,
@@ -84,29 +69,18 @@ const AdminCustomers = () => {
       }
 
       const customerData = data || [];
-      console.log('=== PROCESSING CUSTOMERS ===');
-      console.log(`Total customers found: ${customerData.length}`);
-      
-      // Log each customer for debugging
-      customerData.forEach((customer, index) => {
-        console.log(`Customer ${index + 1}:`, {
-          id: customer.id,
-          name: customer.full_name,
-          email: customer.email_id,
-          phone: customer.phone_number,
-          created: customer.created_at
-        });
-      });
+      console.log('All customer data:', customerData);
       
       setCustomers(customerData);
       setFilteredCustomers(customerData);
       
-      console.log('=== STATE UPDATE COMPLETE ===');
-      console.log('customers state will be set to:', customerData.length, 'items');
+      toast({
+        title: 'Success',
+        description: `Loaded ${customerData.length} customers`,
+      });
       
     } catch (error) {
-      console.error('=== UNEXPECTED ERROR ===');
-      console.error('Error in fetchCustomers:', error);
+      console.error('Unexpected error:', error);
       toast({
         title: 'Unexpected Error',
         description: 'An unexpected error occurred while fetching customers',
@@ -114,7 +88,6 @@ const AdminCustomers = () => {
       });
     } finally {
       setIsLoading(false);
-      console.log('=== FETCH COMPLETE ===');
     }
   };
 
@@ -166,35 +139,21 @@ const AdminCustomers = () => {
   };
 
   useEffect(() => {
-    console.log('Component mounted, calling fetchCustomers...');
     fetchCustomers();
   }, []);
 
   useEffect(() => {
-    console.log('=== SEARCH FILTER DEBUG ===');
-    console.log('Search term:', searchTerm);
-    console.log('Total customers:', customers.length);
-    
     if (searchTerm) {
       const filtered = customers.filter(customer =>
         customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.email_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.phone_number?.includes(searchTerm)
       );
-      console.log('Filtered customers:', filtered.length);
       setFilteredCustomers(filtered);
     } else {
-      console.log('No search term, showing all customers');
       setFilteredCustomers(customers);
     }
   }, [customers, searchTerm]);
-
-  // Debug: Log current state
-  console.log('=== CURRENT COMPONENT STATE ===');
-  console.log('isLoading:', isLoading);
-  console.log('customers array length:', customers.length);
-  console.log('filteredCustomers array length:', filteredCustomers.length);
-  console.log('searchTerm:', searchTerm);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -231,17 +190,6 @@ const AdminCustomers = () => {
                 Refresh
               </Button>
             </div>
-          </div>
-
-          {/* Debug info - remove this after fixing */}
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded">
-            <h3 className="font-semibold text-yellow-800">DEBUG INFO:</h3>
-            <p className="text-yellow-700">
-              Loading: {isLoading ? 'Yes' : 'No'} | 
-              Total Customers: {customers.length} | 
-              Filtered: {filteredCustomers.length} |
-              Search: "{searchTerm}"
-            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
