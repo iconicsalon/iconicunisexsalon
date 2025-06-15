@@ -350,7 +350,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue (Expected)</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="h-4 w-4 text-muted-foreground">₹</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
@@ -361,7 +361,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Amount Paid</CardTitle>
-                <DollarSign className="h-4 w-4 text-green-500" />
+                <span className="h-4 w-4 text-green-500">₹</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">₹{stats.totalAmountPaid.toFixed(2)}</div>
@@ -375,7 +375,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Monthly Revenue (Expected)</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="h-4 w-4 text-muted-foreground">₹</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">₹{stats.monthlyRevenue.toFixed(2)}</div>
@@ -388,7 +388,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Monthly Amount Paid</CardTitle>
-                <DollarSign className="h-4 w-4 text-green-500" />
+                <span className="h-4 w-4 text-green-500">₹</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">₹{stats.monthlyAmountPaid.toFixed(2)}</div>
