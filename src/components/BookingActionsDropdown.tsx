@@ -34,6 +34,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
 
   const handleCancelBooking = async () => {
@@ -54,8 +55,9 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
         description: "Your booking has been successfully cancelled.",
       });
 
-      onBookingUpdate();
       setShowCancelDialog(false);
+      setDropdownOpen(false);
+      onBookingUpdate();
     } catch (error) {
       console.error('Error cancelling booking:', error);
       toast({
@@ -68,13 +70,18 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
     }
   };
 
+  const handleBookingUpdate = () => {
+    setDropdownOpen(false);
+    onBookingUpdate();
+  };
+
   const canEdit = booking.status === 'pending';
   const canReschedule = booking.status === 'pending' || booking.status === 'confirmed';
   const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-gray-300">
             <MoreVertical className="h-4 w-4" />
@@ -83,7 +90,10 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
         <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
           {canEdit && (
             <DropdownMenuItem 
-              onClick={() => setShowEditDialog(true)}
+              onClick={() => {
+                setShowEditDialog(true);
+                setDropdownOpen(false);
+              }}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2"
             >
               <Edit className="h-4 w-4" />
@@ -92,7 +102,10 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
           )}
           {canReschedule && (
             <DropdownMenuItem 
-              onClick={() => setShowRescheduleDialog(true)}
+              onClick={() => {
+                setShowRescheduleDialog(true);
+                setDropdownOpen(false);
+              }}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2"
             >
               <Calendar className="h-4 w-4" />
@@ -101,7 +114,10 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
           )}
           {canCancel && (
             <DropdownMenuItem 
-              onClick={() => setShowCancelDialog(true)}
+              onClick={() => {
+                setShowCancelDialog(true);
+                setDropdownOpen(false);
+              }}
               className="flex items-center gap-2 cursor-pointer hover:bg-red-50 text-red-600 px-3 py-2"
             >
               <X className="h-4 w-4" />
@@ -138,7 +154,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
         booking={booking}
         open={showRescheduleDialog}
         onOpenChange={setShowRescheduleDialog}
-        onBookingUpdate={onBookingUpdate}
+        onBookingUpdate={handleBookingUpdate}
       />
 
       {/* Edit Booking Dialog */}
@@ -146,7 +162,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
         booking={booking}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        onBookingUpdate={onBookingUpdate}
+        onBookingUpdate={handleBookingUpdate}
       />
     </>
   );
