@@ -7,7 +7,7 @@ import { useUserStore } from '@/stores/userStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Plus, Clock, MoreVertical } from 'lucide-react';
+import { Calendar, Plus, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import MultiStepBookingDialog from '@/components/MultiStepBookingDialog';
 import BookingActionsDropdown from '@/components/BookingActionsDropdown';
@@ -67,11 +67,8 @@ const MyBookings = () => {
   };
 
   const canManageBooking = (booking: any) => {
-    const bookingDate = new Date(booking.booking_date);
-    const today = new Date();
-    const isPastBooking = bookingDate < today;
-    
-    return !isPastBooking && (booking.status === 'pending' || booking.status === 'confirmed');
+    // Allow management for pending and confirmed bookings
+    return booking.status === 'pending' || booking.status === 'confirmed';
   };
 
   return (

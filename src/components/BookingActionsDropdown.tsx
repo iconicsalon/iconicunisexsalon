@@ -76,15 +76,15 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-gray-300">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg">
+        <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
           {canEdit && (
             <DropdownMenuItem 
               onClick={() => setShowEditDialog(true)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50"
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2"
             >
               <Edit className="h-4 w-4" />
               Edit Services
@@ -93,7 +93,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
           {canReschedule && (
             <DropdownMenuItem 
               onClick={() => setShowRescheduleDialog(true)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50"
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2"
             >
               <Calendar className="h-4 w-4" />
               Reschedule
@@ -102,7 +102,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
           {canCancel && (
             <DropdownMenuItem 
               onClick={() => setShowCancelDialog(true)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-red-50 text-red-600"
+              className="flex items-center gap-2 cursor-pointer hover:bg-red-50 text-red-600 px-3 py-2"
             >
               <X className="h-4 w-4" />
               Cancel Booking
@@ -113,7 +113,7 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
             <AlertDialogDescription>
