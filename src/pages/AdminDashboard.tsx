@@ -15,16 +15,23 @@ import {
   Users, 
   TrendingUp,
   Filter,
-  CheckCircle
+  CheckCircle,
+  Clock,
+  XCircle
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardStats {
   totalBookings: number;
   monthlyBookings: number;
   completedBookings: number;
+  acceptedBookings: number;
   pendingBookings: number;
+  cancelledBookings: number;
   totalRevenue: number;
   monthlyRevenue: number;
+  totalAmountPaid: number;
+  monthlyAmountPaid: number;
 }
 
 interface Booking {
@@ -45,29 +52,40 @@ const AdminDashboard = () => {
     totalBookings: 0,
     monthlyBookings: 0,
     completedBookings: 0,
+    acceptedBookings: 0,
     pendingBookings: 0,
+    cancelledBookings: 0,
     totalRevenue: 0,
     monthlyRevenue: 0,
+    totalAmountPaid: 0,
+    monthlyAmountPaid: 0,
   });
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching dashboard data for month:', selectedMonth);
       
       // Get current month start and end
       const monthStart = startOfMonth(new Date(selectedMonth));
       const monthEnd = endOfMonth(new Date(selectedMonth));
 
-      // Fetch all bookings
+      // Fetch all bookings with error handling
       const { data: allBookings, error: allError } = await supabase
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (allError) throw allError;
+      if (allError) {
+        console.error('Error fetching all bookings:', allError);
+        throw allError;
+      }
+
+      console.log('All bookings fetched:', allBookings?.length || 0);
 
       // Fetch monthly bookings
       const { data: monthlyBookingsData, error: monthlyError } = await supabase
@@ -77,64 +95,105 @@ const AdminDashboard = () => {
         .lte('booking_date', format(monthEnd, 'yyyy-MM-dd'))
         .order('booking_date', { ascending: false });
 
-      if (monthlyError) throw monthlyError;
+      if (monthlyError) {
+        console.error('Error fetching monthly bookings:', monthlyError);
+        throw monthlyError;
+      }
 
-      // Get profiles for recent bookings
+      console.log('Monthly bookings fetched:', monthlyBookingsData?.length || 0);
+
+      // Get profiles for recent bookings (limit to 10 most recent)
       const recentBookingsWithProfiles: Booking[] = [];
+      const recentBookingsToProcess = (monthlyBookingsData || []).slice(0, 10);
       
-      for (const booking of (monthlyBookingsData || []).slice(0, 10)) {
+      for (const booking of recentBookingsToProcess) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('full_name, phone_number')
           .eq('id', booking.user_id)
           .single();
 
+        // Don't throw error if profile not found, just use fallback
         recentBookingsWithProfiles.push({
           ...booking,
-          customer_name: profile?.full_name || 'Unknown',
+          customer_name: profile?.full_name || 'Unknown Customer',
           customer_phone: profile?.phone_number || 'N/A'
         });
       }
 
-      // Calculate stats
+      // Calculate comprehensive stats
       let totalRevenue = 0;
       let monthlyRevenue = 0;
+      let totalAmountPaid = 0;
+      let monthlyAmountPaid = 0;
       let completedBookings = 0;
+      let acceptedBookings = 0;
       let pendingBookings = 0;
+      let cancelledBookings = 0;
 
+      // Calculate stats from all bookings
       allBookings?.forEach(booking => {
-        // Calculate total revenue from completed bookings
-        if (booking.status === 'done' && booking.amount_paid) {
-          totalRevenue += Number(booking.amount_paid);
+        const status = booking.status?.toLowerCase() || 'pending';
+        
+        // Count bookings by status
+        if (status === 'completed') {
+          completedBookings++;
+        } else if (status === 'accept' || status === 'accepted') {
+          acceptedBookings++;
+        } else if (status === 'pending') {
+          pendingBookings++;
+        } else if (status === 'cancel' || status === 'cancelled') {
+          cancelledBookings++;
         }
         
-        // Count completed and pending bookings
-        if (booking.status === 'done') {
-          completedBookings++;
-        } else if (booking.status === 'pending') {
-          pendingBookings++;
+        // Calculate total amounts
+        if (booking.total_amount) {
+          totalRevenue += Number(booking.total_amount);
+        }
+        if (booking.amount_paid) {
+          totalAmountPaid += Number(booking.amount_paid);
         }
       });
 
-      // Calculate monthly revenue from completed bookings
+      // Calculate monthly stats
       monthlyBookingsData?.forEach(booking => {
-        if (booking.status === 'done' && booking.amount_paid) {
-          monthlyRevenue += Number(booking.amount_paid);
+        if (booking.total_amount) {
+          monthlyRevenue += Number(booking.total_amount);
+        }
+        if (booking.amount_paid) {
+          monthlyAmountPaid += Number(booking.amount_paid);
         }
       });
 
-      setStats({
+      const newStats = {
         totalBookings: allBookings?.length || 0,
         monthlyBookings: monthlyBookingsData?.length || 0,
         completedBookings,
+        acceptedBookings,
         pendingBookings,
+        cancelledBookings,
         totalRevenue,
         monthlyRevenue,
+        totalAmountPaid,
+        monthlyAmountPaid,
+      };
+
+      console.log('Calculated stats:', newStats);
+      setStats(newStats);
+      setRecentBookings(recentBookingsWithProfiles);
+
+      toast({
+        title: "Dashboard Updated",
+        description: "Dashboard data has been refreshed successfully.",
       });
 
-      setRecentBookings(recentBookingsWithProfiles);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch dashboard data: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -145,15 +204,34 @@ const AdminDashboard = () => {
   }, [selectedMonth]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'done':
+    const normalizedStatus = status?.toLowerCase() || 'pending';
+    switch (normalizedStatus) {
+      case 'completed':
         return 'bg-green-100 text-green-800';
+      case 'accept':
+      case 'accepted':
+        return 'bg-blue-100 text-blue-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'cancel':
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDisplayStatus = (status: string) => {
+    const normalizedStatus = status?.toLowerCase() || 'pending';
+    switch (normalizedStatus) {
+      case 'accept':
+        return 'Accepted';
+      case 'cancel':
+        return 'Cancelled';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -164,8 +242,15 @@ const AdminDashboard = () => {
         
         <main className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-2">Overview of your salon's performance</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-gray-600 mt-2">Overview of your salon's performance</p>
+              </div>
+              <Button onClick={fetchDashboardData} disabled={isLoading} variant="outline">
+                {isLoading ? 'Refreshing...' : 'Refresh Data'}
+              </Button>
+            </div>
           </div>
 
           {/* Filters */}
@@ -191,7 +276,7 @@ const AdminDashboard = () => {
             </Select>
           </div>
 
-          {/* Stats Cards */}
+          {/* Main Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -217,50 +302,99 @@ const AdminDashboard = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed Bookings</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.completedBookings}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
+                <div className="text-2xl font-bold text-yellow-600">{stats.pendingBookings}</div>
+                <p className="text-xs text-muted-foreground">Awaiting approval</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Accepted Bookings</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground">From completed bookings</p>
+                <div className="text-2xl font-bold text-blue-600">{stats.acceptedBookings}</div>
+                <p className="text-xs text-muted-foreground">Approved bookings</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Additional Revenue Card */}
+          {/* Secondary Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed Bookings</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{stats.completedBookings}</div>
+                <p className="text-xs text-muted-foreground">Finished services</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cancelled Bookings</CardTitle>
+                <XCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{stats.cancelledBookings}</div>
+                <p className="text-xs text-muted-foreground">Cancelled services</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue (Expected)</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">Total booking amounts</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Amount Paid</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">₹{stats.totalAmountPaid.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">Actually received</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Monthly Revenue Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">Monthly Revenue (Expected)</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">₹{stats.monthlyRevenue.toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
-                  {format(new Date(selectedMonth), 'MMMM yyyy')}
+                  {format(new Date(selectedMonth), 'MMMM yyyy')} - Total booking amounts
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Monthly Amount Paid</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingBookings}</div>
-                <p className="text-xs text-muted-foreground">Awaiting completion</p>
+                <div className="text-2xl font-bold text-green-600">₹{stats.monthlyAmountPaid.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(selectedMonth), 'MMMM yyyy')} - Actually received
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -285,7 +419,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center gap-3">
                           <h3 className="font-medium">{booking.customer_name}</h3>
                           <Badge className={getStatusColor(booking.status || 'pending')}>
-                            {booking.status || 'pending'}
+                            {getDisplayStatus(booking.status || 'pending')}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
@@ -303,12 +437,16 @@ const AdminDashboard = () => {
                         <div className="space-y-1">
                           {booking.total_amount && (
                             <p className="text-sm text-gray-600">
-                              Total: ₹{booking.total_amount}
+                              Expected: ₹{booking.total_amount}
                             </p>
                           )}
-                          {booking.amount_paid && (
-                            <p className="font-semibold text-salon-purple">
+                          {booking.amount_paid ? (
+                            <p className="font-semibold text-green-600">
                               Paid: ₹{booking.amount_paid}
+                            </p>
+                          ) : (
+                            <p className="font-semibold text-red-600">
+                              Paid: ₹0
                             </p>
                           )}
                         </div>
