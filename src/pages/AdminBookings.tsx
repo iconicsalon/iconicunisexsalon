@@ -90,15 +90,23 @@ const AdminBookings = () => {
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
+      console.log('Updating booking status:', bookingId, 'to:', newStatus);
+      
+      const { data, error } = await supabase
         .from('bookings')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Update successful:', data);
 
       // Update local state
       setBookings(prev => prev.map(booking => 
@@ -116,7 +124,7 @@ const AdminBookings = () => {
       console.error('Error updating booking status:', error);
       toast({
         title: "Error",
-        description: "Failed to update booking status.",
+        description: "Failed to update booking status. Please try again.",
         variant: "destructive",
       });
     }
@@ -218,9 +226,27 @@ const AdminBookings = () => {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'cancel':
+      case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDisplayStatus = (status: string) => {
+    switch (status) {
+      case 'accept':
+        return 'Accepted';
+      case 'cancel':
+        return 'Cancelled';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -343,14 +369,20 @@ const AdminBookings = () => {
                                 <SelectTrigger className="w-32">
                                   <SelectValue>
                                     <Badge className={getStatusColor(booking.status || 'pending')}>
-                                      {booking.status || 'pending'}
+                                      {getDisplayStatus(booking.status || 'pending')}
                                     </Badge>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="accept">Accept</SelectItem>
-                                  <SelectItem value="cancel">Cancel</SelectItem>
+                                  <SelectItem value="pending">
+                                    <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                                  </SelectItem>
+                                  <SelectItem value="accept">
+                                    <Badge className="bg-green-100 text-green-800">Accept</Badge>
+                                  </SelectItem>
+                                  <SelectItem value="cancel">
+                                    <Badge className="bg-red-100 text-red-800">Cancel</Badge>
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
