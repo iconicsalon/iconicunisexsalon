@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -53,22 +52,39 @@ const MyBookings = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'accept':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'cancel':
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'completed':
         return 'bg-blue-100 text-blue-800';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const getDisplayStatus = (status: string) => {
+    switch (status) {
+      case 'accept':
+        return 'Accepted';
+      case 'cancel':
+        return 'Cancelled';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
   const canManageBooking = (booking: any) => {
-    // Allow management for pending and confirmed bookings
-    return booking.status === 'pending' || booking.status === 'confirmed';
+    // Allow management for pending bookings only
+    // Once admin accepts or cancels, customer cannot modify
+    return booking.status === 'pending';
   };
 
   return (
@@ -136,7 +152,7 @@ const MyBookings = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className={getStatusColor(booking.status)}>
-                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            {getDisplayStatus(booking.status)}
                           </Badge>
                           {canManageBooking(booking) && (
                             <BookingActionsDropdown 
@@ -185,6 +201,23 @@ const MyBookings = () => {
                         <div className="text-sm text-gray-500">
                           Booked on {format(new Date(booking.created_at), 'MMM d, yyyy')}
                         </div>
+
+                        {/* Status-specific messages */}
+                        {booking.status === 'accept' && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-green-800 text-sm font-medium">
+                              ✅ Your booking has been accepted! We look forward to seeing you.
+                            </p>
+                          </div>
+                        )}
+                        
+                        {(booking.status === 'cancel' || booking.status === 'cancelled') && (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="text-red-800 text-sm font-medium">
+                              ❌ This booking has been cancelled. Please contact us if you have any questions.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

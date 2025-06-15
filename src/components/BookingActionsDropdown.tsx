@@ -84,9 +84,16 @@ const BookingActionsDropdown = ({ booking, onBookingUpdate }: BookingActionsDrop
     onBookingUpdate();
   };
 
+  // Only allow actions for pending bookings
+  // Once admin accepts or cancels, customer cannot modify
   const canEdit = booking.status === 'pending';
-  const canReschedule = booking.status === 'pending' || booking.status === 'confirmed';
-  const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
+  const canReschedule = booking.status === 'pending';
+  const canCancel = booking.status === 'pending';
+
+  // Don't show dropdown if no actions are available
+  if (!canEdit && !canReschedule && !canCancel) {
+    return null;
+  }
 
   return (
     <>

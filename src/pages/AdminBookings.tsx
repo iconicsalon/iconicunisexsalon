@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -93,13 +92,19 @@ const AdminBookings = () => {
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', bookingId);
 
       if (error) throw error;
 
       // Update local state
       setBookings(prev => prev.map(booking => 
+        booking.id === bookingId ? { ...booking, status: newStatus } : booking
+      ));
+      setFilteredBookings(prev => prev.map(booking => 
         booking.id === bookingId ? { ...booking, status: newStatus } : booking
       ));
 
@@ -208,11 +213,11 @@ const AdminBookings = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'done':
+      case 'accept':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
+      case 'cancel':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -258,8 +263,8 @@ const AdminBookings = () => {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="accept">Accept</SelectItem>
+                    <SelectItem value="cancel">Cancel</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -342,9 +347,10 @@ const AdminBookings = () => {
                                     </Badge>
                                   </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                                   <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="done">Done</SelectItem>
+                                  <SelectItem value="accept">Accept</SelectItem>
+                                  <SelectItem value="cancel">Cancel</SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
@@ -391,13 +397,22 @@ const AdminBookings = () => {
                             <TableCell>
                               <div className="flex gap-2">
                                 {booking.status === 'pending' && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updateBookingStatus(booking.id, 'done')}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    Mark Done
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updateBookingStatus(booking.id, 'accept')}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      Accept
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => updateBookingStatus(booking.id, 'cancel')}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </TableCell>
