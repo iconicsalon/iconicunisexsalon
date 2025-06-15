@@ -14,6 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Search, Copy, User, Calendar, RefreshCw } from 'lucide-react';
@@ -36,22 +44,39 @@ interface Booking {
   total_amount: number | null;
 }
 
+const CUSTOMERS_PER_PAGE = 20;
+
 const AdminCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const { toast } = useToast();
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (page: number = 1, search: string = '') => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      // Add search filter if provided
+      if (search.trim()) {
+        query = query.or(`full_name.ilike.%${search}%,email_id.ilike.%${search}%,phone_number.ilike.%${search}%`);
+      }
+
+      // Add pagination
+      const from = (page - 1) * CUSTOMERS_PER_PAGE;
+      const to = from + CUSTOMERS_PER_PAGE - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('Supabase error:', error);
@@ -66,10 +91,12 @@ const AdminCustomers = () => {
       const customerData = data || [];
       setCustomers(customerData);
       setFilteredCustomers(customerData);
+      setTotalCustomers(count || 0);
+      setTotalPages(Math.ceil((count || 0) / CUSTOMERS_PER_PAGE));
       
       toast({
         title: 'Success',
-        description: `Loaded ${customerData.length} customers`,
+        description: `Loaded ${customerData.length} customers (${count} total)`,
       });
       
     } catch (error) {
@@ -127,25 +154,23 @@ const AdminCustomers = () => {
   };
 
   const handleRefresh = () => {
-    fetchCustomers();
+    fetchCustomers(currentPage, searchTerm);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+    fetchCustomers(1, value);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchCustomers(page, searchTerm);
   };
 
   useEffect(() => {
     fetchCustomers();
   }, []);
-
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = customers.filter(customer =>
-        customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.email_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone_number?.includes(searchTerm)
-      );
-      setFilteredCustomers(filtered);
-    } else {
-      setFilteredCustomers(customers);
-    }
-  }, [customers, searchTerm]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -191,7 +216,7 @@ const AdminCustomers = () => {
                 <CardTitle className="flex items-center justify-between">
                   All Customers
                   <span className="text-sm font-normal text-gray-500">
-                    Total: {filteredCustomers.length}
+                    Total: {totalCustomers}
                   </span>
                 </CardTitle>
                 <div className="relative">
@@ -199,7 +224,7 @@ const AdminCustomers = () => {
                   <Input
                     placeholder="Search by name, email, or phone..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -211,47 +236,105 @@ const AdminCustomers = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-salon-purple"></div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Joined</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredCustomers.length === 0 ? (
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8">
-                              {customers.length === 0 ? 'No customers found in database' : 'No matching customers'}
-                            </TableCell>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Joined</TableHead>
                           </TableRow>
-                        ) : (
-                          filteredCustomers.map((customer) => (
-                            <TableRow 
-                              key={customer.id}
-                              className="cursor-pointer hover:bg-gray-50"
-                              onClick={() => handleCustomerClick(customer)}
-                            >
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{customer.full_name}</div>
-                                  <div className="text-sm text-gray-500">{customer.email_id}</div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {customer.phone_number || 'N/A'}
-                              </TableCell>
-                              <TableCell>
-                                {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                        </TableHeader>
+                        <TableBody>
+                          {filteredCustomers.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-8">
+                                {totalCustomers === 0 ? 'No customers found in database' : 'No matching customers'}
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                          ) : (
+                            filteredCustomers.map((customer) => (
+                              <TableRow 
+                                key={customer.id}
+                                className="cursor-pointer hover:bg-gray-50"
+                                onClick={() => handleCustomerClick(customer)}
+                              >
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{customer.full_name}</div>
+                                    <div className="text-sm text-gray-500">{customer.email_id}</div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {customer.phone_number || 'N/A'}
+                                </TableCell>
+                                <TableCell>
+                                  {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="mt-6">
+                        <Pagination>
+                          <PaginationContent>
+                            {currentPage > 1 && (
+                              <PaginationItem>
+                                <PaginationPrevious 
+                                  onClick={() => handlePageChange(currentPage - 1)}
+                                  className="cursor-pointer"
+                                />
+                              </PaginationItem>
+                            )}
+                            
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = currentPage - 2 + i;
+                              }
+                              
+                              return (
+                                <PaginationItem key={pageNum}>
+                                  <PaginationLink
+                                    onClick={() => handlePageChange(pageNum)}
+                                    isActive={currentPage === pageNum}
+                                    className="cursor-pointer"
+                                  >
+                                    {pageNum}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              );
+                            })}
+                            
+                            {currentPage < totalPages && (
+                              <PaginationItem>
+                                <PaginationNext 
+                                  onClick={() => handlePageChange(currentPage + 1)}
+                                  className="cursor-pointer"
+                                />
+                              </PaginationItem>
+                            )}
+                          </PaginationContent>
+                        </Pagination>
+                        
+                        <div className="text-center mt-4 text-sm text-gray-600">
+                          Showing {((currentPage - 1) * CUSTOMERS_PER_PAGE) + 1} to {Math.min(currentPage * CUSTOMERS_PER_PAGE, totalCustomers)} of {totalCustomers} customers
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
