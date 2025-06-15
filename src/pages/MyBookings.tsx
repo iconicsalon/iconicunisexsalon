@@ -7,9 +7,10 @@ import { useUserStore } from '@/stores/userStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, Clock, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import MultiStepBookingDialog from '@/components/MultiStepBookingDialog';
+import BookingActionsDropdown from '@/components/BookingActionsDropdown';
 
 const MyBookings = () => {
   const { user, profile, bookings, isLoading, fetchBookings } = useUserStore();
@@ -35,6 +36,13 @@ const MyBookings = () => {
     }
   };
 
+  const handleBookingUpdate = () => {
+    // Refetch bookings after any booking update
+    if (user && user.id) {
+      fetchBookings(user.id);
+    }
+  };
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -51,9 +59,19 @@ const MyBookings = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const canManageBooking = (booking: any) => {
+    const bookingDate = new Date(booking.booking_date);
+    const today = new Date();
+    const isPastBooking = bookingDate < today;
+    
+    return !isPastBooking && (booking.status === 'pending' || booking.status === 'confirmed');
   };
 
   return (
@@ -104,18 +122,32 @@ const MyBookings = () => {
                   <Card key={booking.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="flex-1">
                           <CardTitle className="flex items-center gap-2 text-lg">
                             <Calendar className="h-5 w-5" />
                             {format(new Date(booking.booking_date), 'MMMM d, yyyy')}
                           </CardTitle>
+                          {booking.time_slot && (
+                            <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                              <Clock className="h-4 w-4" />
+                              {booking.time_slot}
+                            </div>
+                          )}
                           <p className="text-sm text-gray-600 mt-1">
                             Booking ID: {booking.id.slice(0, 8)}...
                           </p>
                         </div>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(booking.status)}>
+                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          </Badge>
+                          {canManageBooking(booking) && (
+                            <BookingActionsDropdown 
+                              booking={booking} 
+                              onBookingUpdate={handleBookingUpdate}
+                            />
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>

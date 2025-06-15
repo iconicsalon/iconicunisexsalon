@@ -18,6 +18,7 @@ export interface Booking {
   id: string;
   user_id: string;
   booking_date: string;
+  time_slot: string;
   services: string[];
   category_list: string[];
   status: string;
