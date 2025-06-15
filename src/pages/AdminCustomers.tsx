@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Copy, User, Calendar } from 'lucide-react';
+import { Search, Copy, User, Calendar, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Customer {
@@ -47,16 +47,38 @@ const AdminCustomers = () => {
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching all customers...');
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setCustomers(data || []);
-      setFilteredCustomers(data || []);
+      console.log('Customers data:', data);
+      console.log('Customers error:', error);
+
+      if (error) {
+        console.error('Error fetching customers:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch customers',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const customerData = data || [];
+      console.log(`Found ${customerData.length} customers`);
+      
+      setCustomers(customerData);
+      setFilteredCustomers(customerData);
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Error in fetchCustomers:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching customers',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +126,10 @@ const AdminCustomers = () => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchCustomers();
+  };
+
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -141,15 +167,33 @@ const AdminCustomers = () => {
         
         <main className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Customer Management</h1>
-            <p className="text-gray-600 mt-2">View customer information and booking history</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Customer Management</h1>
+                <p className="text-gray-600 mt-2">View customer information and booking history</p>
+              </div>
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Customers List */}
             <Card>
               <CardHeader>
-                <CardTitle>All Customers</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  All Customers
+                  <span className="text-sm font-normal text-gray-500">
+                    Total: {filteredCustomers.length}
+                  </span>
+                </CardTitle>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -180,7 +224,7 @@ const AdminCustomers = () => {
                         {filteredCustomers.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={3} className="text-center py-8">
-                              No customers found
+                              {customers.length === 0 ? 'No customers found' : 'No matching customers'}
                             </TableCell>
                           </TableRow>
                         ) : (
