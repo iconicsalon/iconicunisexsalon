@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +14,7 @@ const bookingSchema = z.object({
   booking_date: z.date({
     required_error: 'Booking date is required',
   }),
+  time_slot: z.string().min(1, 'Please select a time slot'),
   services: z.array(z.string()).min(1, 'Please select at least one service'),
 });
 
@@ -26,6 +26,41 @@ interface UserProfile {
   email_id: string;
   phone_number: string | null;
 }
+
+// Generate time slots from 9 AM to 10 PM with 2-hour intervals
+export const generateTimeSlots = () => {
+  const slots = [
+    { value: '9:00 AM - 11:00 AM', label: '9:00 AM - 11:00 AM' },
+    { value: '11:00 AM - 1:00 PM', label: '11:00 AM - 1:00 PM' },
+    { value: '1:00 PM - 3:00 PM', label: '1:00 PM - 3:00 PM' },
+    { value: '3:00 PM - 5:00 PM', label: '3:00 PM - 5:00 PM' },
+    { value: '5:00 PM - 7:00 PM', label: '5:00 PM - 7:00 PM' },
+    { value: '7:00 PM - 9:00 PM', label: '7:00 PM - 9:00 PM' },
+    { value: '9:00 PM - 10:00 PM', label: '9:00 PM - 10:00 PM' },
+  ];
+  return slots;
+};
+
+// Filter out past time slots for today
+export const getAvailableTimeSlots = (selectedDate: Date) => {
+  const allSlots = generateTimeSlots();
+  const today = new Date();
+  const isToday = selectedDate.toDateString() === today.toDateString();
+  
+  if (!isToday) {
+    return allSlots;
+  }
+  
+  const currentHour = today.getHours();
+  
+  return allSlots.filter(slot => {
+    const startHour = parseInt(slot.value.split(':')[0]);
+    const isPM = slot.value.includes('PM') && !slot.value.startsWith('12');
+    const adjustedHour = isPM ? startHour + 12 : startHour;
+    
+    return adjustedHour > currentHour;
+  });
+};
 
 export const useBookingForm = (onBookingSuccess?: () => void) => {
   const [loading, setLoading] = useState(false);
@@ -40,6 +75,7 @@ export const useBookingForm = (onBookingSuccess?: () => void) => {
       email_id: '',
       phone_number: '',
       booking_date: new Date(),
+      time_slot: '',
       services: [],
     },
   });
@@ -79,6 +115,7 @@ export const useBookingForm = (onBookingSuccess?: () => void) => {
           email_id: profile.email_id,
           phone_number: profile.phone_number || '',
           booking_date: new Date(),
+          time_slot: '',
           services: [],
         });
       }
@@ -159,6 +196,7 @@ export const useBookingForm = (onBookingSuccess?: () => void) => {
         .insert({
           user_id: user.id,
           booking_date: format(data.booking_date, 'yyyy-MM-dd'),
+          time_slot: data.time_slot,
           services: data.services,
           total_amount: totalAmount,
           status: 'pending',

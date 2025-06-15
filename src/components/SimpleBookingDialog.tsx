@@ -9,9 +9,21 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { useBookingForm } from '@/hooks/useBookingForm';
+import { useBookingForm, getAvailableTimeSlots } from '@/hooks/useBookingForm';
 import ContactInformation from '@/components/booking/ContactInformation';
 import ServiceSelection from '@/components/booking/ServiceSelection';
 
@@ -29,6 +41,9 @@ const SimpleBookingDialog: React.FC<SimpleBookingDialogProps> = ({
     setOpen(false);
     onBookingSuccess?.();
   });
+
+  const selectedDate = form.watch('booking_date');
+  const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -49,6 +64,32 @@ const SimpleBookingDialog: React.FC<SimpleBookingDialogProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <ContactInformation form={form} />
+            
+            <FormField
+              control={form.control}
+              name="time_slot"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Time Slot</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a time slot" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availableTimeSlots.map((slot) => (
+                        <SelectItem key={slot.value} value={slot.value}>
+                          {slot.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <ServiceSelection form={form} services={services} />
 
             <Button

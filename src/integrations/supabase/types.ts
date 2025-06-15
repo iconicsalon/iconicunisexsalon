@@ -18,6 +18,7 @@ export type Database = {
           id: string
           services: string[]
           status: string | null
+          time_slot: string
           total_amount: number | null
           updated_at: string | null
           user_id: string
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           services: string[]
           status?: string | null
+          time_slot: string
           total_amount?: number | null
           updated_at?: string | null
           user_id: string
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           services?: string[]
           status?: string | null
+          time_slot?: string
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string

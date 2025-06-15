@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import type { Service } from '@/types/service';
+import { generateTimeSlots, getAvailableTimeSlots } from '@/hooks/useBookingForm';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -42,6 +50,7 @@ const bookingSchema = z.object({
   booking_date: z.date({
     required_error: 'Booking date is required',
   }),
+  time_slot: z.string().min(1, 'Please select a time slot'),
   gender: z.enum(['male', 'female'], {
     required_error: 'Please select a gender',
   }),
@@ -96,6 +105,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       email_id: '',
       phone_number: '',
       booking_date: new Date(),
+      time_slot: '',
       gender: 'female',
       categories: [],
       services: [],
@@ -104,6 +114,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
 
   const watchedCategories = form.watch('categories');
   const watchedGender = form.watch('gender');
+  const watchedBookingDate = form.watch('booking_date');
 
   useEffect(() => {
     if (open) {
@@ -118,6 +129,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         email_id: '',
         phone_number: '',
         booking_date: new Date(),
+        time_slot: '',
         gender: 'female',
         categories: [],
         services: [],
@@ -180,6 +192,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           email_id: profile.email_id,
           phone_number: profile.phone_number || '',
           booking_date: new Date(),
+          time_slot: '',
           gender: (profile.gender as 'male' | 'female') || 'female',
           categories: [],
           services: [],
@@ -233,7 +246,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
     let isValid = false;
     
     if (currentStep === 1) {
-      isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'gender']);
+      isValid = await form.trigger(['full_name', 'email_id', 'booking_date', 'time_slot', 'gender']);
     } else if (currentStep === 2) {
       isValid = await form.trigger(['categories']);
     } else if (currentStep === 3) {
@@ -297,6 +310,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
       console.log('Submitting booking with data:', {
         user_id: user.id,
         booking_date: format(data.booking_date, 'yyyy-MM-dd'),
+        time_slot: data.time_slot,
         services: data.services,
         category_list: categoriesWithSelectedServices,
         total_amount: totalAmount,
@@ -307,6 +321,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         .insert({
           user_id: user.id,
           booking_date: format(data.booking_date, 'yyyy-MM-dd'),
+          time_slot: data.time_slot,
           services: data.services,
           category_list: categoriesWithSelectedServices, // Only save categories with selected services
           total_amount: totalAmount,
@@ -392,7 +407,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           {!bookingConfirmed && (
             <>
               <div className="text-sm text-gray-600 mt-2">
-                Step {currentStep} of 3: {currentStep === 1 ? "Confirm Details & Select Date" : currentStep === 2 ? "Select Categories" : "Select Services"}
+                Step {currentStep} of 3: {currentStep === 1 ? "Confirm Details & Select Date/Time" : currentStep === 2 ? "Select Categories" : "Select Services"}
               </div>
               
               {/* Progress indicator */}
@@ -414,7 +429,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <AnimatePresence mode="wait">
-                {/* Step 1: Contact Information & Gender */}
+                {/* Step 1: Contact Information, Date & Time Slot */}
                 {currentStep === 1 && (
                   <motion.div
                     key="step1"
@@ -567,6 +582,35 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                                 />
                               </PopoverContent>
                             </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="time_slot"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-medium text-gray-900">
+                              Time Slot <span className="text-pink-500">*</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-full h-12 px-4 border-gray-300 bg-white hover:bg-gray-50">
+                                  <SelectValue placeholder="Select a time slot" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {getAvailableTimeSlots(watchedBookingDate).map((slot) => (
+                                  <SelectItem key={slot.value} value={slot.value}>
+                                    {slot.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -817,7 +861,8 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                   <span>Booking Date & Time</span>
                 </div>
                 <div className="text-gray-700">
-                  {format(confirmedBookingData.booking_date, "EEEE, MMMM d, yyyy, h:mm a")}
+                  <div>{format(confirmedBookingData.booking_date, "EEEE, MMMM d, yyyy")}</div>
+                  <div className="font-medium text-salon-purple">{confirmedBookingData.time_slot}</div>
                 </div>
               </div>
 
