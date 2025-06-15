@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ const Navbar = () => {
   const { toast } = useToast();
 
   const navigation = [
-    { name: 'Home', href: '/' },
     { name: 'Offers', href: '/offers' },
     { name: 'Services', href: '/all-services' },
     { name: 'About Us', href: '/about' },
