@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Calendar, Filter, Check, X, Eye, Download } from 'lucide-react';
+import { Search, Calendar, Filter, Check, X, Eye, Download, RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   exportBookingsToExcel, 
@@ -387,15 +387,32 @@ const AdminBookings = () => {
                 <h1 className="text-3xl font-bold text-gray-900">All Bookings</h1>
                 <p className="text-gray-600 mt-2">Manage and view all customer bookings</p>
               </div>
-              <Button 
-                onClick={handleFilteredExport}
-                disabled={isExporting || isLoading || filteredBookings.length === 0}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {isExporting ? 'Exporting...' : 'Export to Excel'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => fetchBookings()}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={isLoading}
+                  title="Refresh"
+                >
+                  {isLoading ? (
+                    <span className="animate-spin">
+                      <RefreshCcw className="h-4 w-4" />
+                    </span>
+                  ) : (
+                    <RefreshCcw className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button 
+                  onClick={handleFilteredExport}
+                  disabled={isExporting || isLoading || filteredBookings.length === 0}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isExporting ? 'Exporting...' : 'Export to Excel'}
+                </Button>
+              </div>
             </div>
           </div>
 
