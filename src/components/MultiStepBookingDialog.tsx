@@ -328,6 +328,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
         services: data.services,
         category_list: categoriesWithSelectedServices,
         total_amount: totalAmount,
+        full_name: data.full_name,
+        email_id: data.email_id,
+        phone_number: data.phone_number,
       });
 
       const { error } = await supabase
@@ -341,6 +344,9 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
           total_amount: totalAmount,
           amount_paid: totalAmount,
           status: 'pending',
+          full_name: data.full_name,
+          email_id: data.email_id,
+          phone_number: data.phone_number,
         });
 
       if (error) {
