@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -355,7 +354,6 @@ const AdminBookings = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Customer</TableHead>
-                        <TableHead>Contact</TableHead>
                         <TableHead>Booking Date</TableHead>
                         <TableHead>Services</TableHead>
                         <TableHead>Status</TableHead>
@@ -367,7 +365,7 @@ const AdminBookings = () => {
                     <TableBody>
                       {filteredBookings.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
+                          <TableCell colSpan={7} className="text-center py-8">
                             No bookings found matching your criteria
                           </TableCell>
                         </TableRow>
@@ -377,11 +375,8 @@ const AdminBookings = () => {
                             <TableCell>
                               <div>
                                 <div className="font-medium">{booking.customer_name}</div>
-                                <div className="text-sm text-gray-500">{booking.customer_email}</div>
+                                <div className="text-sm text-gray-500">{booking.customer_phone}</div>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {booking.customer_phone}
                             </TableCell>
                             <TableCell>
                               {format(new Date(booking.booking_date), 'MMM d, yyyy')}
