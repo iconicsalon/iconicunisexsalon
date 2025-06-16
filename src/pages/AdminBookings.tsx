@@ -104,53 +104,42 @@ const AdminBookings = () => {
     console.log('=== BOOKING STATUS UPDATE DEBUG ===');
     console.log('Booking ID:', bookingId);
     console.log('New Status:', newStatus);
-    console.log('Current user session:', await supabase.auth.getSession());
     
     setUpdatingStatus(bookingId);
     
     try {
-      // First, let's check the current booking data
-      const { data: currentBooking, error: fetchError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('id', bookingId)
-        .single();
-        
-      if (fetchError) {
-        console.error('Error fetching current booking:', fetchError);
-        throw new Error(`Failed to fetch booking: ${fetchError.message}`);
-      }
-      
-      console.log('Current booking data:', currentBooking);
-      
-      // Now attempt the update with a simpler approach - don't require returned data
-      const { error: updateError } = await supabase
+      // Perform the database update with better error handling
+      const { data, error } = await supabase
         .from('bookings')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .select('*')
+        .single();
 
-      if (updateError) {
-        console.error('Supabase update error details:', {
-          message: updateError.message,
-          details: updateError.details,
-          hint: updateError.hint,
-          code: updateError.code
-        });
-        throw new Error(`Database error: ${updateError.message}`);
+      if (error) {
+        console.error('Database update error:', error);
+        throw new Error(`Failed to update booking: ${error.message}`);
       }
 
-      console.log('Update successful');
+      if (!data) {
+        throw new Error('No data returned from update operation');
+      }
 
-      // Update local state optimistically
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId ? { ...booking, status: newStatus } : booking
-      ));
-      setFilteredBookings(prev => prev.map(booking => 
-        booking.id === bookingId ? { ...booking, status: newStatus } : booking
-      ));
+      console.log('Database update successful:', data);
+
+      // Update local state only after successful database update
+      const updateBookingInState = (prevBookings: Booking[]) => 
+        prevBookings.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, status: newStatus, updated_at: new Date().toISOString() }
+            : booking
+        );
+
+      setBookings(updateBookingInState);
+      setFilteredBookings(updateBookingInState);
 
       toast({
         title: "Success",
@@ -160,15 +149,16 @@ const AdminBookings = () => {
       console.log('Status update completed successfully');
     } catch (error: any) {
       console.error('=== STATUS UPDATE ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('Error details:', error);
       
       toast({
         title: "Error",
         description: `Failed to update booking status: ${error.message}`,
         variant: "destructive",
       });
+
+      // Refresh bookings to ensure UI reflects actual database state
+      await fetchBookings();
     } finally {
       setUpdatingStatus(null);
     }
