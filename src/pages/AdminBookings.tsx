@@ -223,13 +223,13 @@ const AdminBookings = () => {
     
     if (booking.status === 'pending') {
       actions.push(
-        { label: 'Accept', action: () => updateBookingStatus(booking.id, 'accept'), variant: 'default' },
-        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancel'), variant: 'destructive' }
+        { label: 'Accept', action: () => updateBookingStatus(booking.id, 'accepted'), variant: 'default' },
+        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancelled'), variant: 'destructive' }
       );
-    } else if (booking.status === 'accept') {
+    } else if (booking.status === 'accepted') {
       actions.push(
         { label: 'Mark as Completed', action: () => updateBookingStatus(booking.id, 'completed'), variant: 'default' },
-        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancel'), variant: 'destructive' }
+        { label: 'Cancel', action: () => updateBookingStatus(booking.id, 'cancelled'), variant: 'destructive' }
       );
     }
     
@@ -270,8 +270,8 @@ const AdminBookings = () => {
         totalAmountPaid,
         completedBookings: bookingsForExport.filter(b => b.status === 'completed').length,
         pendingBookings: bookingsForExport.filter(b => b.status === 'pending').length,
-        acceptedBookings: bookingsForExport.filter(b => b.status === 'accept').length,
-        cancelledBookings: bookingsForExport.filter(b => b.status === 'cancel').length,
+        acceptedBookings: bookingsForExport.filter(b => b.status === 'accepted').length,
+        cancelledBookings: bookingsForExport.filter(b => b.status === 'cancelled').length,
       };
 
       const filename = generateFilteredFilename();
@@ -313,7 +313,7 @@ const AdminBookings = () => {
       );
     }
 
-    // Status filter
+    // Status filter - Fixed to use correct status values
     if (statusFilter !== 'all') {
       filtered = filtered.filter(booking => booking.status === statusFilter);
     }
@@ -331,17 +331,14 @@ const AdminBookings = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accept':
+      case 'accepted':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case 'cancel':
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'completed':
         return 'bg-blue-100 text-blue-800';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -349,10 +346,8 @@ const AdminBookings = () => {
 
   const getDisplayStatus = (status: string) => {
     switch (status) {
-      case 'accept':
+      case 'accepted':
         return 'Accepted';
-      case 'cancel':
-        return 'Cancelled';
       case 'cancelled':
         return 'Cancelled';
       default:
@@ -429,8 +424,9 @@ const AdminBookings = () => {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="accept">Accept</SelectItem>
-                    <SelectItem value="cancel">Cancel</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
 
