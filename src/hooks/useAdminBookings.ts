@@ -24,12 +24,23 @@ export const useAdminBookings = () => {
         .from('bookings')
         .select(`
           *,
-          profile:profiles(full_name, email_id, phone_number)
+          profiles!inner(full_name, email_id, phone_number)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(booking => ({
+        ...booking,
+        profile: booking.profiles ? {
+          full_name: booking.profiles.full_name,
+          email_id: booking.profiles.email_id,
+          phone_number: booking.profiles.phone_number
+        } : undefined
+      })) || [];
+
+      setBookings(transformedData);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -44,18 +55,28 @@ export const useAdminBookings = () => {
 
   const fetchBookingsByStatus = async (status: string) => {
     try {
-      // This query will utilize the idx_bookings_user_status index
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
-          profile:profiles(full_name, email_id, phone_number)
+          profiles!inner(full_name, email_id, phone_number)
         `)
         .eq('status', status)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(booking => ({
+        ...booking,
+        profile: booking.profiles ? {
+          full_name: booking.profiles.full_name,
+          email_id: booking.profiles.email_id,
+          phone_number: booking.profiles.phone_number
+        } : undefined
+      })) || [];
+
+      return transformedData;
     } catch (error) {
       console.error('Error fetching bookings by status:', error);
       return [];
@@ -68,11 +89,10 @@ export const useAdminBookings = () => {
         .from('bookings')
         .select(`
           *,
-          profile:profiles(full_name, email_id, phone_number)
+          profiles!inner(full_name, email_id, phone_number)
         `)
         .eq('user_id', userId);
 
-      // This query will utilize the idx_bookings_user_status index when status is provided
       if (status) {
         query = query.eq('status', status);
       }
@@ -80,7 +100,18 @@ export const useAdminBookings = () => {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(booking => ({
+        ...booking,
+        profile: booking.profiles ? {
+          full_name: booking.profiles.full_name,
+          email_id: booking.profiles.email_id,
+          phone_number: booking.profiles.phone_number
+        } : undefined
+      })) || [];
+
+      return transformedData;
     } catch (error) {
       console.error('Error fetching user bookings:', error);
       return [];
