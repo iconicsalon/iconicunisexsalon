@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import AdminOnly from '@/components/AdminOnly';
 import AdminNavbar from '@/components/AdminNavbar';
@@ -15,6 +16,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -22,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Search, Calendar, Filter, Check, X, Eye, Download, RefreshCcw } from 'lucide-react';
+import { Search, Calendar, Filter, Check, X, Eye, Download, RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   exportBookingsToExcel, 
@@ -43,9 +52,12 @@ interface Booking {
   customer_phone?: string;
 }
 
+const BOOKINGS_PER_PAGE = 10;
+
 const AdminBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -56,38 +68,79 @@ const AdminBookings = () => {
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (page = 1, resetToFirstPage = false) => {
     try {
       setIsLoading(true);
       
-      // First get bookings
-      const { data: bookingsData, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('booking_date', { ascending: false });
-
-      if (bookingsError) throw bookingsError;
-
-      // Then get user profiles for each booking
-      const bookingsWithProfiles: Booking[] = [];
+      // Calculate offset
+      const offset = (page - 1) * BOOKINGS_PER_PAGE;
       
-      for (const booking of bookingsData || []) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, phone_number, email_id')
-          .eq('id', booking.user_id)
-          .single();
-
-        bookingsWithProfiles.push({
-          ...booking,
-          customer_name: profile?.full_name || 'Unknown',
-          customer_email: profile?.email_id || 'Unknown',
-          customer_phone: profile?.phone_number || 'N/A'
-        });
+      // Build query with filters
+      let query = supabase
+        .from('bookings')
+        .select('*, profiles!inner(full_name, email_id, phone_number)', { count: 'exact' });
+      
+      // Apply filters
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
       }
-
-      setBookings(bookingsWithProfiles);
-      setFilteredBookings(bookingsWithProfiles);
+      
+      if (monthFilter !== 'all') {
+        const startDate = `${monthFilter}-01`;
+        const endDate = `${monthFilter}-31`;
+        query = query.gte('booking_date', startDate).lte('booking_date', endDate);
+      }
+      
+      if (searchTerm) {
+        // For search, we need to fetch all and filter client-side due to joined table search
+        const { data: allData, error, count } = await query.order('booking_date', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Filter client-side for search terms
+        const filteredData = allData?.filter(booking => 
+          booking.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.profiles?.phone_number?.includes(searchTerm) ||
+          booking.profiles?.email_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.services.some(service => 
+            service.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        ) || [];
+        
+        // Apply pagination to filtered results
+        const paginatedData = filteredData.slice(offset, offset + BOOKINGS_PER_PAGE);
+        
+        const transformedData = paginatedData.map(booking => ({
+          ...booking,
+          customer_name: booking.profiles?.full_name || 'Unknown',
+          customer_email: booking.profiles?.email_id || 'Unknown',
+          customer_phone: booking.profiles?.phone_number || 'N/A'
+        }));
+        
+        setBookings(transformedData);
+        setTotalBookings(filteredData.length);
+      } else {
+        // No search term - use database pagination
+        const { data, error, count } = await query
+          .range(offset, offset + BOOKINGS_PER_PAGE - 1)
+          .order('booking_date', { ascending: false });
+        
+        if (error) throw error;
+        
+        const transformedData = data?.map(booking => ({
+          ...booking,
+          customer_name: booking.profiles?.full_name || 'Unknown',
+          customer_email: booking.profiles?.email_id || 'Unknown',
+          customer_phone: booking.profiles?.phone_number || 'N/A'
+        })) || [];
+        
+        setBookings(transformedData);
+        setTotalBookings(count || 0);
+      }
+      
+      if (resetToFirstPage) {
+        setCurrentPage(1);
+      }
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -108,7 +161,6 @@ const AdminBookings = () => {
     setUpdatingStatus(bookingId);
     
     try {
-      // Perform the database update with better error handling
       const { data, error } = await supabase
         .from('bookings')
         .update({ 
@@ -130,16 +182,8 @@ const AdminBookings = () => {
 
       console.log('Database update successful:', data);
 
-      // Update local state only after successful database update
-      const updateBookingInState = (prevBookings: Booking[]) => 
-        prevBookings.map(booking => 
-          booking.id === bookingId 
-            ? { ...booking, status: newStatus, updated_at: new Date().toISOString() }
-            : booking
-        );
-
-      setBookings(updateBookingInState);
-      setFilteredBookings(updateBookingInState);
+      // Refresh current page
+      await fetchBookings(currentPage);
 
       toast({
         title: "Success",
@@ -156,9 +200,6 @@ const AdminBookings = () => {
         description: `Failed to update booking status: ${error.message}`,
         variant: "destructive",
       });
-
-      // Refresh bookings to ensure UI reflects actual database state
-      await fetchBookings();
     } finally {
       setUpdatingStatus(null);
     }
@@ -240,23 +281,54 @@ const AdminBookings = () => {
     try {
       setIsExporting(true);
       
-      // Use current filtered bookings for export with proper type mapping
-      const bookingsForExport = filteredBookings.map(booking => ({
+      // For export, we need to fetch all matching records, not just current page
+      let exportQuery = supabase
+        .from('bookings')
+        .select('*, profiles!inner(full_name, email_id, phone_number)');
+      
+      if (statusFilter !== 'all') {
+        exportQuery = exportQuery.eq('status', statusFilter);
+      }
+      
+      if (monthFilter !== 'all') {
+        const startDate = `${monthFilter}-01`;
+        const endDate = `${monthFilter}-31`;
+        exportQuery = exportQuery.gte('booking_date', startDate).lte('booking_date', endDate);
+      }
+      
+      const { data: exportData, error } = await exportQuery.order('booking_date', { ascending: false });
+      
+      if (error) throw error;
+      
+      let filteredExportData = exportData || [];
+      
+      // Apply search filter if exists
+      if (searchTerm) {
+        filteredExportData = filteredExportData.filter(booking => 
+          booking.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.profiles?.phone_number?.includes(searchTerm) ||
+          booking.profiles?.email_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.services.some(service => 
+            service.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        );
+      }
+      
+      const bookingsForExport = filteredExportData.map(booking => ({
         id: booking.id,
-        customer_name: booking.customer_name || 'Unknown',
-        customer_phone: booking.customer_phone || 'N/A',
-        customer_email: booking.customer_email || 'N/A',
+        customer_name: booking.profiles?.full_name || 'Unknown',
+        customer_phone: booking.profiles?.phone_number || 'N/A',
+        customer_email: booking.profiles?.email_id || 'N/A',
         booking_date: booking.booking_date,
         created_at: booking.created_at,
         services: booking.services,
         status: booking.status,
         total_amount: booking.total_amount,
         amount_paid: booking.amount_paid,
-        time_slot: undefined, // Add if available in your booking interface
-        category_list: undefined // Add if available in your booking interface
+        time_slot: undefined,
+        category_list: undefined
       }));
 
-      // Calculate filtered stats
       let totalRevenue = 0;
       let totalAmountPaid = 0;
       bookingsForExport.forEach(booking => {
@@ -294,40 +366,24 @@ const AdminBookings = () => {
     }
   };
 
+  const totalPages = Math.ceil(totalBookings / BOOKINGS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      fetchBookings(page);
+    }
+  };
+
+  // Reset to first page when filters change
   useEffect(() => {
-    fetchBookings();
+    fetchBookings(1, true);
+  }, [statusFilter, monthFilter, searchTerm]);
+
+  // Initial load
+  useEffect(() => {
+    fetchBookings(1);
   }, []);
-
-  useEffect(() => {
-    let filtered = bookings;
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.customer_phone?.includes(searchTerm) ||
-        booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.services.some(service => 
-          service.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
-
-    // Status filter - Fixed to use correct status values
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
-    }
-
-    // Month filter
-    if (monthFilter !== 'all') {
-      filtered = filtered.filter(booking => {
-        const bookingMonth = format(new Date(booking.booking_date), 'yyyy-MM');
-        return bookingMonth === monthFilter;
-      });
-    }
-
-    setFilteredBookings(filtered);
-  }, [bookings, searchTerm, statusFilter, monthFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -355,10 +411,30 @@ const AdminBookings = () => {
     }
   };
 
-  // Get unique months from bookings
-  const availableMonths = [...new Set(
-    bookings.map(booking => format(new Date(booking.booking_date), 'yyyy-MM'))
-  )].sort().reverse();
+  // Get unique months - we'll need to fetch this separately for the filter
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const fetchAvailableMonths = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('booking_date');
+        
+        if (error) throw error;
+        
+        const months = [...new Set(
+          data?.map(booking => format(new Date(booking.booking_date), 'yyyy-MM')) || []
+        )].sort().reverse();
+        
+        setAvailableMonths(months);
+      } catch (error) {
+        console.error('Error fetching available months:', error);
+      }
+    };
+    
+    fetchAvailableMonths();
+  }, []);
 
   return (
     <AdminOnly>
@@ -374,7 +450,7 @@ const AdminBookings = () => {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => fetchBookings()}
+                  onClick={() => fetchBookings(currentPage)}
                   variant="outline"
                   className="flex items-center gap-2"
                   disabled={isLoading}
@@ -390,7 +466,7 @@ const AdminBookings = () => {
                 </Button>
                 <Button 
                   onClick={handleFilteredExport}
-                  disabled={isExporting || isLoading || filteredBookings.length === 0}
+                  disabled={isExporting || isLoading}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
@@ -452,135 +528,196 @@ const AdminBookings = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-salon-purple"></div>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Booking Date</TableHead>
-                        <TableHead>Services</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Total Amount</TableHead>
-                        <TableHead>Amount Paid</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredBookings.length === 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8">
-                            No bookings found matching your criteria
-                          </TableCell>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Booking Date</TableHead>
+                          <TableHead>Services</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Total Amount</TableHead>
+                          <TableHead>Amount Paid</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredBookings.map((booking) => (
-                          <TableRow key={booking.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{booking.customer_name}</div>
-                                <div className="text-sm text-gray-500">{booking.customer_phone}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(booking.booking_date), 'MMM d, yyyy')}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {booking.services.map((service, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {service}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(booking.status || 'pending')}>
-                                {getDisplayStatus(booking.status || 'pending')}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {booking.total_amount ? `₹${booking.total_amount}` : 'N/A'}
-                            </TableCell>
-                            <TableCell>
-                              {editingAmountId === booking.id ? (
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    type="number"
-                                    value={tempAmount}
-                                    onChange={(e) => setTempAmount(e.target.value)}
-                                    className="w-20"
-                                    min="0"
-                                    step="0.01"
-                                  />
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleAmountSave(booking.id)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleAmountCancel}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => handleAmountEdit(booking.id, booking.amount_paid)}
-                                  className="text-left p-0 h-auto font-normal"
-                                >
-                                  {booking.amount_paid ? `₹${booking.amount_paid}` : 'Set amount'}
-                                </Button>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                    <Eye className="h-4 w-4" />
-                                    View
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
-                                  {getAvailableActions(booking).length > 0 ? (
-                                    getAvailableActions(booking).map((actionItem, index) => (
-                                      <DropdownMenuItem
-                                        key={index}
-                                        onClick={actionItem.action}
-                                        disabled={updatingStatus === booking.id}
-                                        className={`cursor-pointer hover:bg-gray-50 px-3 py-2 ${
-                                          actionItem.variant === 'destructive' ? 'text-red-600 hover:bg-red-50' : ''
-                                        }`}
-                                      >
-                                        {updatingStatus === booking.id ? 'Updating...' : actionItem.label}
-                                      </DropdownMenuItem>
-                                    ))
-                                  ) : (
-                                    <DropdownMenuItem disabled className="px-3 py-2 text-gray-500">
-                                      No actions available
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                      </TableHeader>
+                      <TableBody>
+                        {bookings.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8">
+                              No bookings found matching your criteria
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ) : (
+                          bookings.map((booking) => (
+                            <TableRow key={booking.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{booking.customer_name}</div>
+                                  <div className="text-sm text-gray-500">{booking.customer_phone}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(booking.booking_date), 'MMM d, yyyy')}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {booking.services.map((service, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      {service}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={getStatusColor(booking.status || 'pending')}>
+                                  {getDisplayStatus(booking.status || 'pending')}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {booking.total_amount ? `₹${booking.total_amount}` : 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {editingAmountId === booking.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      value={tempAmount}
+                                      onChange={(e) => setTempAmount(e.target.value)}
+                                      className="w-20"
+                                      min="0"
+                                      step="0.01"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleAmountSave(booking.id)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleAmountCancel}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    onClick={() => handleAmountEdit(booking.id, booking.amount_paid)}
+                                    className="text-left p-0 h-auto font-normal"
+                                  >
+                                    {booking.amount_paid ? `₹${booking.amount_paid}` : 'Set amount'}
+                                  </Button>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                      <Eye className="h-4 w-4" />
+                                      View
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg z-50">
+                                    {getAvailableActions(booking).length > 0 ? (
+                                      getAvailableActions(booking).map((actionItem, index) => (
+                                        <DropdownMenuItem
+                                          key={index}
+                                          onClick={actionItem.action}
+                                          disabled={updatingStatus === booking.id}
+                                          className={`cursor-pointer hover:bg-gray-50 px-3 py-2 ${
+                                            actionItem.variant === 'destructive' ? 'text-red-600 hover:bg-red-50' : ''
+                                          }`}
+                                        >
+                                          {updatingStatus === booking.id ? 'Updating...' : actionItem.label}
+                                        </DropdownMenuItem>
+                                      ))
+                                    ) : (
+                                      <DropdownMenuItem disabled className="px-3 py-2 text-gray-500">
+                                        No actions available
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        Showing {((currentPage - 1) * BOOKINGS_PER_PAGE) + 1} to {Math.min(currentPage * BOOKINGS_PER_PAGE, totalBookings)} of {totalBookings} bookings
+                      </div>
+                      
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => handlePageChange(currentPage - 1)}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                          
+                          {[...Array(totalPages)].map((_, index) => {
+                            const page = index + 1;
+                            const isCurrentPage = page === currentPage;
+                            
+                            // Show first page, last page, current page, and pages around current page
+                            const shouldShow = page === 1 || page === totalPages || 
+                                             (page >= currentPage - 1 && page <= currentPage + 1);
+                            
+                            if (!shouldShow) {
+                              // Show ellipsis for gaps
+                              if (page === currentPage - 2 || page === currentPage + 2) {
+                                return (
+                                  <PaginationItem key={`ellipsis-${page}`}>
+                                    <span className="px-4 py-2 text-gray-500">...</span>
+                                  </PaginationItem>
+                                );
+                              }
+                              return null;
+                            }
+                            
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => handlePageChange(page)}
+                                  isActive={isCurrentPage}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+                          
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
               )}
               
               <div className="mt-4 text-sm text-gray-500">
-                Showing {filteredBookings.length} of {bookings.length} bookings
-                {filteredBookings.length > 0 && (
-                  <span className="ml-4 text-blue-600">
-                    Click "Export to Excel" to download current view
+                {totalBookings > 0 && (
+                  <span className="text-blue-600">
+                    Click "Export to Excel" to download all matching records (not just current page)
                   </span>
                 )}
               </div>
