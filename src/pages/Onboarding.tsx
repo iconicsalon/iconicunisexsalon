@@ -40,186 +40,185 @@ const Onboarding = () => {
   });
 
   const onSubmit = async (data: OnboardingFormData) => {
-    if (!user) {
-      toast({
-        title: 'Error',
-        description: 'No user found. Please try logging in again.',
-        variant: 'destructive',
-      });
-      return;
-    }
+		if (!user) {
+			toast({
+				title: "Error",
+				description: "No user found. Please try logging in again.",
+				variant: "destructive",
+			});
+			return;
+		}
 
-    if (!user.email) {
-      toast({
-        title: 'Error',
-        description: 'User email is missing. Please try logging in again.',
-        variant: 'destructive',
-      });
-      return;
-    }
+		if (!user.email) {
+			toast({
+				title: "Error",
+				description: "User email is missing. Please try logging in again.",
+				variant: "destructive",
+			});
+			return;
+		}
 
-    setIsSubmitting(true);
-    
-    try {
-      console.log('=== ONBOARDING FORM SUBMISSION ===');
-      console.log('Form data:', data);
-      console.log('User:', user);
-      console.log('User ID:', user.id);
-      console.log('User Email:', user.email);
+		setIsSubmitting(true);
 
-      await updateProfile({
-        full_name: data.full_name,
-        phone_number: data.phone_number,
-        instagram_id: data.instagram_id || null,
-        gender: data.gender,
-        onboarding_completed: true,
-      });
+		try {
+			console.log("=== ONBOARDING FORM SUBMISSION ===");
+			console.log("Form data:", data);
+			console.log("User:", user);
+			console.log("User ID:", user.id);
+			console.log("User Email:", user.email);
 
-      console.log('Profile update successful, showing success toast');
-      
-      toast({
-        title: 'Welcome to Iconic Unisex Salon!',
-        description: 'Your profile has been set up successfully.',
-      });
+			await updateProfile({
+				full_name: data.full_name,
+				phone_number: data.phone_number,
+				instagram_id: data.instagram_id || null,
+				gender: data.gender,
+				onboarding_completed: true,
+			});
 
-      console.log('Redirecting to home page');
-      navigate('/');
-      
-    } catch (error: any) {
-      console.error('=== ONBOARDING ERROR ===');
-      console.error('Error completing onboarding:', error);
-      
-      // Check if error is related to gender field specifically
-      const errorMessage = error?.message?.includes('gender') 
-        ? '❌ Failed to save gender selection. Please try again.'
-        : error?.message || 'Failed to complete onboarding. Please try again.';
-      
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+			console.log("Profile update successful, showing success toast");
 
-  if (!user) {
-    console.log('No user found, redirecting to home');
-    navigate('/');
-    return null;
-  }
+			toast({
+				title: "Welcome to Royal Glow Salon & Spa!",
+				description: "Your profile has been set up successfully.",
+			});
 
-  return (
-    <div className="min-h-screen bg-gradient-salon flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold gradient-text">
-            Welcome to Iconic Unisex Salon!
-          </CardTitle>
-          <p className="text-gray-600 mt-2">
-            Let's complete your profile to get started
-          </p>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+			console.log("Redirecting to home page");
+			navigate("/");
+		} catch (error: any) {
+			console.error("=== ONBOARDING ERROR ===");
+			console.error("Error completing onboarding:", error);
 
-              <FormField
-                control={form.control}
-                name="phone_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter 10-digit phone number" 
-                        maxLength={10}
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+			// Check if error is related to gender field specifically
+			const errorMessage = error?.message?.includes("gender")
+				? "❌ Failed to save gender selection. Please try again."
+				: error?.message || "Failed to complete onboarding. Please try again.";
 
-              <FormField
-                control={form.control}
-                name="instagram_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instagram ID (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="@your_instagram" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+			toast({
+				title: "Error",
+				description: errorMessage,
+				variant: "destructive",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender *</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => field.onChange('male')}
-                          className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
-                            field.value === 'male'
-                              ? 'bg-black text-white border-black'
-                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                          }`}
-                        >
-                          👨 Male
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => field.onChange('female')}
-                          className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
-                            field.value === 'female'
-                              ? 'bg-black text-white border-black'
-                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                          }`}
-                        >
-                          👩 Female
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+	if (!user) {
+		console.log("No user found, redirecting to home");
+		navigate("/");
+		return null;
+	}
 
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-salon hover:opacity-90"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Setting up...' : 'Complete Setup'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+	return (
+		<div className="min-h-screen bg-gradient-salon flex items-center justify-center p-4">
+			<Card className="w-full max-w-md">
+				<CardHeader className="text-center">
+					<CardTitle className="text-2xl font-bold gradient-text">
+						Welcome to Royal Glow Salon & Spa!
+					</CardTitle>
+					<p className="text-gray-600 mt-2">
+						Let's complete your profile to get started
+					</p>
+				</CardHeader>
+				<CardContent>
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="full_name"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Full Name *</FormLabel>
+										<FormControl>
+											<Input placeholder="Enter your full name" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="phone_number"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Phone Number *</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="Enter 10-digit phone number"
+												maxLength={10}
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="instagram_id"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Instagram ID (Optional)</FormLabel>
+										<FormControl>
+											<Input placeholder="@your_instagram" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="gender"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Gender *</FormLabel>
+										<FormControl>
+											<div className="flex gap-3">
+												<button
+													type="button"
+													onClick={() => field.onChange("male")}
+													className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+														field.value === "male"
+															? "bg-black text-white border-black"
+															: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+													}`}
+												>
+													👨 Male
+												</button>
+												<button
+													type="button"
+													onClick={() => field.onChange("female")}
+													className={`flex-1 px-4 py-3 rounded-full border transition-all duration-200 font-medium ${
+														field.value === "female"
+															? "bg-black text-white border-black"
+															: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+													}`}
+												>
+													👩 Female
+												</button>
+											</div>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<Button
+								type="submit"
+								className="w-full bg-gradient-salon hover:opacity-90"
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? "Setting up..." : "Complete Setup"}
+							</Button>
+						</form>
+					</Form>
+				</CardContent>
+			</Card>
+		</div>
+	);
 };
 
 export default Onboarding;
