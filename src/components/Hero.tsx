@@ -48,7 +48,7 @@ const Hero = () => {
 					{/* Subheading */}
 					<p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
 						Experience premium hair styling, skincare, and beauty treatments in
-						the heart of Bengaluru. Your journey to iconic style starts here.
+						the heart of Bengaluru. Your journey to royal style starts here.
 					</p>
 
 					{/* Location */}

@@ -5,27 +5,27 @@ import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from 'lucide-rea
 
 const Footer = () => {
   const contactInfo = [
-    {
-      icon: MapPin,
-      label: 'Location',
-      value: 'Bengaluru, Karnataka'
-    },
-    {
-      icon: Phone,
-      label: 'Phone',
-      value: '+91 XXXXX XXXXX'
-    },
-    {
-      icon: Mail,
-      label: 'Email',
-      value: 'hello@iconicunisexsalon.com'
-    },
-    {
-      icon: Clock,
-      label: 'Hours',
-      value: 'Mon-Sun: 9 AM - 9 PM'
-    }
-  ];
+		{
+			icon: MapPin,
+			label: "Location",
+			value: "Bengaluru, Karnataka",
+		},
+		{
+			icon: Phone,
+			label: "Phone",
+			value: "+91 XXXXX XXXXX",
+		},
+		{
+			icon: Mail,
+			label: "Email",
+			value: "hello@royalglowsalonspa.com",
+		},
+		{
+			icon: Clock,
+			label: "Hours",
+			value: "Mon-Sun: 9 AM - 9 PM",
+		},
+	];
 
   const services = [
     'Hair Cutting & Styling',
