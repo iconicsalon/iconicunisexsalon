@@ -75,74 +75,79 @@ const TestimonialCarousel = () => {
   };
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
-            What Our Clients Say
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Real experiences from our valued customers
-          </p>
-        </div>
+		<section className="py-16 bg-white">
+			<div className="container mx-auto px-4">
+				<div className="text-center mb-12">
+					<h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
+						What Our Clients Say
+					</h2>
+					<p className="text-gray-600 max-w-2xl mx-auto">
+						Real experiences from our valued customers
+					</p>
+				</div>
 
-        <div 
-          className="relative overflow-hidden"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          <div 
-            className="flex transition-transform duration-500 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {testimonials.map((testimonial) => (
-              <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
-                <Card className="max-w-4xl mx-auto">
-                  <CardContent className="p-8">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="flex-shrink-0">
-                        <div className="w-20 h-20 rounded-full bg-gradient-salon flex items-center justify-center text-white text-2xl font-bold">
-                          {testimonial.name.charAt(0)}
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 text-center md:text-left">
-                        <div className="flex justify-center md:justify-start mb-2">
-                          {renderStars(testimonial.rating)}
-                        </div>
-                        
-                        <p className="text-lg text-gray-700 mb-4 italic">
-                          "{testimonial.feedback}"
-                        </p>
-                        
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                          <p className="text-sm text-gray-500">{testimonial.service}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
+				<div
+					className="relative overflow-hidden"
+					onMouseEnter={() => setIsPaused(true)}
+					onMouseLeave={() => setIsPaused(false)}
+				>
+					<div
+						className="flex transition-transform duration-500 ease-in-out"
+						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+					>
+						{testimonials.map((testimonial) => (
+							<div key={testimonial.id} className="w-full flex-shrink-0 px-4">
+								<Card className="max-w-4xl mx-auto">
+									<CardContent className="p-8">
+										<div className="flex flex-col md:flex-row items-center gap-6">
+											<div className="flex-shrink-0">
+												<div className="w-20 h-20 rounded-full bg-gradient-salon flex items-center justify-center text-white text-2xl font-bold">
+													{testimonial.name.charAt(0)}
+												</div>
+											</div>
 
-          {/* Dots indicator */}
-          <div className="flex justify-center mt-8 space-x-2">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-salon-purple' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+											<div className="flex-1 text-center md:text-left">
+												<div className="flex justify-center md:justify-start mb-2">
+													{renderStars(testimonial.rating)}
+												</div>
+
+												<p className="text-lg text-gray-700 mb-4 italic">
+													"{testimonial.feedback}"
+												</p>
+
+												<div>
+													<h4 className="font-semibold text-gray-900">
+														{testimonial.name}
+													</h4>
+													<p className="text-sm text-gray-500">
+														{testimonial.service}
+													</p>
+												</div>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+						))}
+					</div>
+
+					{/* Dots indicator */}
+					<div className="flex justify-center mt-8 space-x-2">
+						{testimonials.map((_, index) => (
+							<button
+								key={index}
+								onClick={() => setCurrentIndex(index)}
+								aria-label={`Go to testimonial ${index + 1}`}
+								className={`w-3 h-3 rounded-full transition-colors ${
+									index === currentIndex ? "bg-salon-purple" : "bg-gray-300"
+								}`}
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+		</section>
+	);
 };
 
 export default TestimonialCarousel;
