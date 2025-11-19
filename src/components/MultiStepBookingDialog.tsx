@@ -505,7 +505,7 @@ const MultiStepBookingDialog: React.FC<MultiStepBookingDialogProps> = ({
                                   {...field} 
                                   disabled 
                                   className="bg-gray-100 border-0 text-gray-700 h-12 px-4 rounded-lg" 
-                                  placeholder="+91 98765 43210"
+                                  placeholder="+91 6360135720"
                                 />
                               </FormControl>
                               <FormMessage />

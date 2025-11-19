@@ -16,7 +16,7 @@ const SocialMediaLinks = () => {
 		{
 			name: "WhatsApp",
 			icon: MessageCircle,
-			url: "https://wa.me/919876543210",
+			url: "https://wa.me/916360135720",
 			color: "from-green-500 to-green-600",
 			hoverColor: "hover:from-green-600 hover:to-green-700",
 		},
@@ -96,9 +96,9 @@ const SocialMediaLinks = () => {
           variant="outline"
           className="w-full border-salon-purple text-salon-purple hover:bg-salon-purple hover:text-white"
         >
-          <a href="tel:+919876543210" className="flex items-center justify-center gap-2">
+          <a href="tel:+916360135720" className="flex items-center justify-center gap-2">
             <span className="text-lg">📞</span>
-            +91 98765 43210
+            +91 6360135720
           </a>
         </Button>
       </motion.div>

@@ -13,12 +13,12 @@ const Footer = () => {
 		{
 			icon: Phone,
 			label: "Phone",
-			value: "+91 XXXXX XXXXX",
+			value: "+91 6360135720",
 		},
 		{
 			icon: Mail,
 			label: "Email",
-			value: "hello@royalglowsalonspa.com",
+			value: "royalglowsalonspa@gmail.com",
 		},
 		{
 			icon: Clock,

@@ -178,8 +178,9 @@ const ContactForm = () => {
       >
         <h3 className="font-semibold text-gray-900 mb-2">Visit Our Salon</h3>
         <p className="text-gray-600 text-sm">
-          📍 123 Beauty Street, Koramangala<br />
-          Bengaluru, Karnataka 560034<br />
+          1st Floor, Narmada Complex, 48/3, Rayasandra Main Rd,<br />
+          above SBI bank, Naganathapura, Parappana Agrahara,<br />
+          Bengaluru, Karnataka 560100<br />
           ⏰ Open: 10:00 AM - 8:00 PM (All days)
         </p>
       </motion.div>
