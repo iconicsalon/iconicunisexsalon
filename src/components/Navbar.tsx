@@ -105,7 +105,7 @@ const Navbar = () => {
 							className="flex items-center gap-2"
 						>
 							<Phone className="h-4 w-4" />
-							<a href="tel:+916360135720">Call Now</a>
+							<a href="tel:+918970355716">Call Now</a>
 						</Button>
 
 						{!user ? (
@@ -206,7 +206,7 @@ const Navbar = () => {
 										className="w-full flex items-center gap-2"
 									>
 										<Phone className="h-4 w-4" />
-										<a href="tel:+916360135720">Call Now</a>
+										<a href="tel:+918970355716">Call Now</a>
 									</Button>
 
 									{!user ? (
